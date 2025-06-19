@@ -1,12 +1,13 @@
+import { SplashScreen } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
-  User
-} from 'firebase/auth';
-import { createContext, useContext, useEffect, useState } from 'react';
-import { auth } from '../config/firebase';
+  User,
+} from "firebase/auth";
+import { createContext, useContext, useEffect, useState } from "react";
+import { auth } from "../config/firebase";
 
 interface AuthContextData {
   user: User | null;
@@ -23,9 +24,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    SplashScreen.preventAutoHideAsync();
+
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+      SplashScreen.hideAsync();
     });
 
     return unsubscribe;
@@ -65,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
-} 
+}
