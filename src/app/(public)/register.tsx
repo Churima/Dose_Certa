@@ -1,40 +1,46 @@
 import { Link, router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Button, Text, TextInput } from 'react-native-paper';
 import { useAuth } from '../../contexts/AuthContext';
 
-export default function Login() {
+export default function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { signIn } = useAuth();
+  const { signUp } = useAuth();
 
-  async function handleLogin() {
-    if (!email || !password) {
+  async function handleRegister() {
+    if (!email || !password || !confirmPassword) {
       setError('Por favor, preencha todos os campos');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
       return;
     }
 
     try {
       setLoading(true);
       setError('');
-      await signIn(email, password);
+      await signUp(email, password);
       router.replace('/(private)');
     } catch {
-      setError('Email ou senha inválidos');
+      setError('Erro ao criar conta. Tente novamente.');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <KeyboardAvoidingView style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.content}>
         <Text variant="headlineLarge" style={styles.title}>
-          Login
+          Cadastro
         </Text>
 
         <TextInput
@@ -54,32 +60,40 @@ export default function Login() {
           style={styles.input}
         />
 
+        <TextInput
+          label="Confirmar Senha"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secureTextEntry
+          style={styles.input}
+        />
+
         {error ? (
           <Text style={styles.error}>{error}</Text>
         ) : null}
 
         <Button
           mode="contained"
-          onPress={handleLogin}
+          onPress={handleRegister}
           loading={loading}
           disabled={loading}
           style={styles.button}
           contentStyle={styles.buttonContent}
           labelStyle={styles.buttonLabel}
         >
-          Entrar
+          Cadastrar
         </Button>
 
-        <Link href="/register" asChild>
+        <Link href="/login" asChild>
           <Button
             mode="text"
             style={styles.linkButton}
           >
-            Não tem uma conta? Cadastre-se
+            Já tem uma conta? Faça login
           </Button>
         </Link>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
@@ -116,4 +130,4 @@ const styles = StyleSheet.create({
   linkButton: {
     marginTop: 16,
   },
-});
+}); 

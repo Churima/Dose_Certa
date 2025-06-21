@@ -24,6 +24,8 @@ export default function Splash() {
         <Link href="/login" asChild>
           <Button 
             mode="contained" 
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
           >
             Entrar
           </Button>
@@ -32,6 +34,8 @@ export default function Splash() {
         <Link href="/register" asChild>
           <Button 
             mode="outlined" 
+            contentStyle={styles.buttonContent}
+            labelStyle={styles.buttonLabel}
           >
             Cadastrar
           </Button>
@@ -68,10 +72,10 @@ const styles = StyleSheet.create({
     gap: 12,
     marginBottom: 20,
   },
-  button: {
-    borderRadius: 100,
-  },
   buttonContent: {
-    height: 48,
+    paddingVertical: 8,
+  },
+  buttonLabel: {
+    fontSize: 18,
   },
 });
