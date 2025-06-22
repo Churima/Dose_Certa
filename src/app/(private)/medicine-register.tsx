@@ -27,6 +27,12 @@ import {
 import { db } from '../../config/firebase';
 import { useAuth } from '../../contexts/AuthContext';
 
+import {
+  cancelAllScheduledNotificationsForMedicine,
+  requestNotificationPermissions,
+  scheduleMedicineNotifications,
+} from '../../notification/notification';
+
 const FREQUENCIES = [
   'A cada 8 horas',
   'A cada 6 horas',
@@ -156,6 +162,23 @@ export default function MedicineRegisterScreen() {
       return;
     }
 
+    // --- LÓGICA DE NOTIFICAÇÃO INICIA AQUI ---
+    const permissionGranted = await requestNotificationPermissions();
+    if (!permissionGranted) {
+      const shouldSaveAnyway = await new Promise(resolve => 
+          Alert.alert(
+              "Continuar sem Lembretes?",
+              "Você não deu permissão para notificações. Deseja salvar o medicamento mesmo assim, sem receber lembretes?",
+              [
+                  { text: "Não", onPress: () => resolve(false), style: 'cancel' },
+                  { text: "Sim, salvar", onPress: () => resolve(true) }
+              ]
+          )
+      );
+      if (!shouldSaveAnyway) return;
+    }
+    // --- FIM DA LÓGICA DE PERMISSÃO ---
+
     setIsSaving(true);
     try {
       const horariosTimestamps = times.map((t) => {
@@ -179,12 +202,23 @@ export default function MedicineRegisterScreen() {
       if (medicineId) {
         const ref = doc(db, 'medicamentos', String(medicineId));
         await updateDoc(ref, medicineData);
+        
+        if (permissionGranted) {
+            await cancelAllScheduledNotificationsForMedicine(String(medicineId));
+            await scheduleMedicineNotifications({ id: String(medicineId), ...medicineData });
+        }
+        
         Alert.alert('Sucesso', 'Medicamento atualizado com sucesso!');
       } else {
-        await addDoc(collection(db, 'medicamentos'), {
+        const docRef = await addDoc(collection(db, 'medicamentos'), {
           ...medicineData,
           data_criacao: Timestamp.now(),
         });
+
+        if (permissionGranted) {
+            await scheduleMedicineNotifications({ id: docRef.id, ...medicineData });
+        }
+
         Alert.alert('Sucesso', 'Medicamento salvo com sucesso!');
       }
 
