@@ -1,12 +1,13 @@
-
-import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useAuth } from "@/src/contexts/AuthContext";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "expo-router";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "react-native-paper";
 
 const ProfileScreen = () => {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  const { logout } = useAuth();
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -14,26 +15,36 @@ const ProfileScreen = () => {
       </View>
 
       <View style={styles.optionsContainer}>
-        <TouchableOpacity style={styles.optionItem} onPress={() => {
-            navigation.navigate('(private)/')
-        }}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => {
+            navigation.navigate("(private)/");
+          }}
+        >
           <Ionicons name="person-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Meus Dados</Text>
-            <Text style={styles.optionDescription}>Editar informações básicas</Text>
+            <Text style={styles.optionDescription}>
+              Editar informações básicas
+            </Text>
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity
+          style={styles.optionItem}
+          onPress={() => navigation.navigate("Settings")}
+        >
           <Ionicons name="settings-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Configurações</Text>
-            <Text style={styles.optionDescription}>Notificações e acessibilidade</Text>
+            <Text style={styles.optionDescription}>
+              Notificações e acessibilidade
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
 
-      <Button >
+      <Button mode="contained" onPress={logout}>
         <Text style={styles.logoutButtonText}>Sair da Conta</Text>
       </Button>
     </View>
@@ -43,18 +54,18 @@ const ProfileScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 16,
   },
   optionsContainer: {
@@ -62,53 +73,52 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   optionTextContainer: {
     marginLeft: 15,
   },
   optionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   optionDescription: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
   },
   logoutButton: {
-    backgroundColor: '#62B1F6',
+    backgroundColor: "#62B1F6",
     padding: 15,
     borderRadius: 8,
     marginHorizontal: 16,
     marginTop: 30,
-    alignItems: 'center',
+    alignItems: "center",
   },
   logoutButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   bottomNavBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: '#eee',
-    position: 'absolute',
+    borderTopColor: "#eee",
+    position: "absolute",
     bottom: 0,
-    width: '100%',
-    backgroundColor: '#fff',
+    width: "100%",
+    backgroundColor: "#fff",
   },
   navItem: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   navText: {
     fontSize: 10,
-    color: '#666',
+    color: "#666",
   },
 });
 
