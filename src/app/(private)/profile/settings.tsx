@@ -1,8 +1,6 @@
-
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Switch } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
+import { View, StyleSheet } from 'react-native';
+import { IconButton, Text, Switch, Button, Divider } from 'react-native-paper';
 import type { StackNavigationProp } from '@react-navigation/stack';
 
 type SettingsScreenProps = {
@@ -14,43 +12,52 @@ const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
 
   return (
     <View style={styles.container}>
+      {/* Cabeçalho */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notificações</Text>
+        <IconButton icon="arrow-left" size={24} onPress={() => navigation.goBack()} />
+        <Text variant="headlineSmall" style={styles.headerTitle}>Notificações</Text>
       </View>
 
+      {/* Lembretes de Medicamentos */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Lembretes de Medicamentos</Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Lembretes de Medicamentos</Text>
         <View style={styles.optionItem}>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Ativar Lembretes</Text>
-            <Text style={styles.optionDescription}>Receba notificações para tomar seus medicamentos</Text>
+            <Text style={styles.optionDescription}>
+              Receba notificações para tomar seus medicamentos
+            </Text>
           </View>
           <Switch
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isRemindersEnabled ? "#f5dd4b" : "#f4f3f4"}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={setIsRemindersEnabled}
             value={isRemindersEnabled}
+            onValueChange={setIsRemindersEnabled}
           />
         </View>
+        <Divider />
       </View>
 
+      {/* Configurações de Lembretes */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Configurações de Lembretes</Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>Configurações de Lembretes</Text>
         <View style={styles.optionItem}>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Tempo de Antecedência</Text>
           </View>
           <Text style={styles.optionValue}>15 minutos</Text>
         </View>
+        <Divider />
       </View>
 
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Salvar</Text>
-      </TouchableOpacity>
+      {/* Botão Salvar */}
+      <Button
+        mode="contained"
+        icon="content-save"
+        onPress={() => console.log('Salvar configurações')}
+        style={styles.saveButton}
+        labelStyle={styles.saveButtonText}
+      >
+        Salvar
+      </Button>
     </View>
   );
 };
@@ -63,31 +70,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   headerTitle: {
-    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 16,
+    marginLeft: 8,
   },
   section: {
     marginTop: 20,
     paddingHorizontal: 16,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
     marginBottom: 10,
   },
   optionItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    paddingVertical: 12,
   },
   optionTextContainer: {
     flex: 1,
@@ -106,20 +110,15 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   saveButton: {
-    backgroundColor: '#62B1F6',
-    padding: 15,
-    borderRadius: 8,
     marginHorizontal: 16,
     marginTop: 30,
-    alignItems: 'center',
+    borderRadius: 8,
+    paddingVertical: 6,
   },
   saveButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 
 export default SettingsScreen;
-
-

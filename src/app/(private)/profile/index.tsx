@@ -15,7 +15,7 @@ const ProfileScreen = () => {
 
       <View style={styles.optionsContainer}>
         <TouchableOpacity style={styles.optionItem} onPress={() => {
-            navigation.navigate('(private)/')
+            navigation.navigate('MyData' as never)
         }}>
           <Ionicons name="person-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
@@ -24,7 +24,7 @@ const ProfileScreen = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('Settings')}>
+        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('Settings' as never)}>
           <Ionicons name="settings-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Configurações</Text>

@@ -1,8 +1,6 @@
-
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-
+import { View, StyleSheet } from 'react-native';
+import { IconButton, Text, TextInput, Button } from 'react-native-paper';
 import { StackNavigationProp } from '@react-navigation/stack';
 
 type RootStackParamList = {
@@ -16,32 +14,69 @@ type Props = {
 };
 
 const MyDataScreen: React.FC<Props> = ({ navigation }) => {
+  const [nome, setNome] = React.useState('');
+  const [email, setEmail] = React.useState('');
+  const [telefone, setTelefone] = React.useState('');
+  const [endereco, setEndereco] = React.useState('');
+
   return (
     <View style={styles.container}>
+      {/* Cabeçalho */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="black" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Meus Dados</Text>
+        <IconButton icon="arrow-left" size={24} onPress={() => navigation.goBack()} />
+        <Text variant="headlineSmall" style={styles.headerTitle}>Meus Dados</Text>
       </View>
 
+      {/* Formulário */}
       <View style={styles.formContainer}>
-        <Text style={styles.label}>Nome Completo</Text>
-        <TextInput style={styles.input} placeholder="" />
+        <Text variant="titleSmall" style={styles.label}>Nome Completo</Text>
+        <TextInput
+          mode="outlined"
+          value={nome}
+          onChangeText={setNome}
+          placeholder=""
+        />
 
-        <Text style={styles.label}>E-mail</Text>
-        <TextInput style={styles.input} placeholder="" keyboardType="email-address" />
+        <Text variant="titleSmall" style={styles.label}>E-mail</Text>
+        <TextInput
+          mode="outlined"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          placeholder=""
+        />
 
-        <Text style={styles.label}>Telefone</Text>
-        <TextInput style={styles.input} placeholder="(XX) XXXX-XXXX" keyboardType="phone-pad" />
+        <Text variant="titleSmall" style={styles.label}>Telefone</Text>
+        <TextInput
+          mode="outlined"
+          value={telefone}
+          onChangeText={setTelefone}
+          keyboardType="phone-pad"
+          placeholder="(XX) XXXX-XXXX"
+        />
 
-        <Text style={styles.label}>Endereço (opcional)</Text>
-        <TextInput style={styles.textArea} multiline={true} numberOfLines={4} />
+        <Text variant="titleSmall" style={styles.label}>Endereço (opcional)</Text>
+        <TextInput
+          mode="outlined"
+          value={endereco}
+          onChangeText={setEndereco}
+          multiline
+          numberOfLines={4}
+          style={{ height: 100 }}
+          placeholder=""
+        />
       </View>
 
-      <TouchableOpacity style={styles.saveButton}>
-        <Text style={styles.saveButtonText}>Salvar</Text>
-      </TouchableOpacity>
+      {/* Botão de salvar */}
+      <Button
+        mode="contained"
+        onPress={() => console.log('Salvar dados')}
+        style={styles.saveButton}
+        labelStyle={styles.saveButtonText}
+        icon="content-save"
+      >
+        Salvar
+      </Button>
     </View>
   );
 };
@@ -54,55 +89,33 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 50,
+    paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
   headerTitle: {
-    fontSize: 18,
     fontWeight: 'bold',
-    marginLeft: 16,
+    marginLeft: 8,
   },
   formContainer: {
     padding: 16,
   },
   label: {
-    fontSize: 16,
-    fontWeight: 'bold',
     marginTop: 15,
     marginBottom: 5,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-  },
-  textArea: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 8,
-    padding: 10,
-    fontSize: 16,
-    height: 100,
-    textAlignVertical: 'top',
-  },
   saveButton: {
-    backgroundColor: '#62B1F6',
-    padding: 15,
-    borderRadius: 8,
     marginHorizontal: 16,
     marginTop: 30,
-    alignItems: 'center',
+    borderRadius: 8,
+    paddingVertical: 6,
   },
   saveButtonText: {
-    color: '#fff',
     fontSize: 16,
-    fontWeight: 'bold',
+    color: '#fff',
   },
 });
 
 export default MyDataScreen;
-
-
