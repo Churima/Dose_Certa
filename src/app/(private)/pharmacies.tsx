@@ -1,9 +1,8 @@
-import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 import { useEffect, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import MapView, { Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
-import { Card, Text } from 'react-native-paper';
+import { Button, Card, Text } from 'react-native-paper';
 
 interface Pharmacy {
   id: string;
@@ -15,32 +14,71 @@ interface Pharmacy {
   phone?: string;
 }
 
-//infos mockadas
-const CRICIUMA_LOCATION = {
-  coords: {
-    latitude: -28.6775,
-    longitude: -49.3697,
-    altitude: null,
-    accuracy: 1,
-    altitudeAccuracy: null,
-    heading: null,
-    speed: null
-  },
-  timestamp: Date.now()
-};
+const GOOGLE_PLACES_API_KEY = "";
 
-const GOOGLE_PLACES_API_KEY = Constants.expoConfig?.extra?.googlePlacesApiKey;
 
 export default function PharmaciesScreen() {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [region, setRegion] = useState<Region>({
-    latitude: CRICIUMA_LOCATION.coords.latitude,
-    longitude: CRICIUMA_LOCATION.coords.longitude,
+    latitude: -28.6775,
+    longitude: -49.3697,
     latitudeDelta: 0.02,
     longitudeDelta: 0.02,
   });
+
+  const requestLocationPermission = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permissão de localização negada. Não é possível buscar farmácias próximas.');
+        setLoading(false);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error('Erro ao solicitar permissão de localização:', error);
+      setErrorMsg('Erro ao solicitar permissão de localização.');
+      setLoading(false);
+      return false;
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    try {
+      setLoading(true);
+      setErrorMsg(null);
+
+      const hasPermission = await requestLocationPermission();
+      if (!hasPermission) return;
+
+      const currentLocation = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeInterval: 10000,
+        distanceInterval: 10,
+      });
+
+      setLocation(currentLocation);
+      setRegion({
+        latitude: currentLocation.coords.latitude,
+        longitude: currentLocation.coords.longitude,
+        latitudeDelta: 0.02,
+        longitudeDelta: 0.02,
+      });
+
+      await searchPharmacies(
+        currentLocation.coords.latitude,
+        currentLocation.coords.longitude
+      );
+    } catch (error) {
+      console.error('Erro ao obter localização:', error);
+      setErrorMsg('Erro ao obter sua localização. Verifique se o GPS está ativado.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const searchPharmacies = async (latitude: number, longitude: number) => {
     try {
@@ -79,23 +117,30 @@ export default function PharmaciesScreen() {
   };
 
   useEffect(() => {
-    (async () => {
-      try {
-        setLocation(CRICIUMA_LOCATION);
-        await searchPharmacies(
-          CRICIUMA_LOCATION.coords.latitude,
-          CRICIUMA_LOCATION.coords.longitude
-        );
-      } catch (error) {
-        setErrorMsg('Erro ao carregar localização');
-      }
-    })();
+    getCurrentLocation();
   }, []);
+
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.loadingText}>Obtendo sua localização...</Text>
+      </View>
+    );
+  }
 
   if (errorMsg) {
     return (
       <View style={styles.container}>
-        <Text>{errorMsg}</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{errorMsg}</Text>
+          <Button 
+            mode="contained" 
+            onPress={getCurrentLocation}
+            style={styles.retryButton}
+          >
+            Tentar Novamente
+          </Button>
+        </View>
       </View>
     );
   }
@@ -103,7 +148,16 @@ export default function PharmaciesScreen() {
   if (!location) {
     return (
       <View style={styles.container}>
-        <Text>Carregando localização...</Text>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Localização não disponível</Text>
+          <Button 
+            mode="contained" 
+            onPress={getCurrentLocation}
+            style={styles.retryButton}
+          >
+            Obter Localização
+          </Button>
+        </View>
       </View>
     );
   }
@@ -141,7 +195,8 @@ export default function PharmaciesScreen() {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
           }}
-          title="Centro de Criciúma"
+          title="Sua Localização"
+          description="Você está aqui"
           pinColor="blue"
         />
 
@@ -213,5 +268,25 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 20,
     fontSize: 16,
+  },
+  loadingText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginTop: 50,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  errorText: {
+    textAlign: 'center',
+    fontSize: 16,
+    marginBottom: 20,
+    color: '#666',
+  },
+  retryButton: {
+    marginTop: 10,
   },
 }); 
