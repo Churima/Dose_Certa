@@ -11,7 +11,6 @@
     "ios": {
       "supportsTablet": true,
       "config": {
-        "googleMapsApiKey": "AIzaSyAZFgnipvE4OGW90fvMU6Pr709X1nR4Hxk"
       }
     },
     "android": {
@@ -22,7 +21,6 @@
       "edgeToEdgeEnabled": true,
       "config": {
         "googleMaps": {
-          "apiKey": "AIzaSyAZFgnipvE4OGW90fvMU6Pr709X1nR4Hxk"
         }
       }
     },
@@ -53,7 +51,6 @@
       "typedRoutes": true
     },
     "extra": {
-      "googlePlacesApiKey": "AIzaSyAZFgnipvE4OGW90fvMU6Pr709X1nR4Hxk"
     }
   }
 }
