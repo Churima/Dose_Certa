@@ -22,7 +22,7 @@ export default function TabsLayout() {
       unfocusedIcon: "store-outline",
     },
     {
-      key: "profile",
+      key: "profile/index",
       title: "Perfil",
       focusedIcon: "account",
       unfocusedIcon: "account-outline",
@@ -55,7 +55,7 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" />
       <Tabs.Screen name="medicines" />
       <Tabs.Screen name="pharmacies" />
-      <Tabs.Screen name="profile" />
+      <Tabs.Screen name="profile/index" />
     </Tabs>
   );
 }
