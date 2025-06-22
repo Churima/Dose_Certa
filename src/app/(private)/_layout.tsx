@@ -1,8 +1,7 @@
 import { CommonActions } from "@react-navigation/native";
 import { Tabs } from "expo-router";
-import { BottomNavigation, useTheme } from "react-native-paper";
+import { BottomNavigation } from "react-native-paper";
 export default function TabsLayout() {
-  const theme = useTheme();
   const routes = [
     {
       key: "index",
