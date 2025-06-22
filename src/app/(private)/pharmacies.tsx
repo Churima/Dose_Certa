@@ -14,7 +14,7 @@ interface Pharmacy {
   phone?: string;
 }
 
-const GOOGLE_PLACES_API_KEY = "";
+const GOOGLE_PLACES_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY;
 
 
 export default function PharmaciesScreen() {
