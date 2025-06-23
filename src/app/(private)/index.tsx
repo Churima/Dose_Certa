@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   addDoc,
@@ -11,9 +11,9 @@ import {
   Timestamp,
   updateDoc,
   where,
-} from "firebase/firestore"
-import { useEffect, useState } from "react"
-import { Alert, ScrollView, StyleSheet, View } from "react-native"
+} from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
   ActivityIndicator,
   Appbar,
@@ -26,116 +26,121 @@ import {
   Portal,
   Text,
   TextInput,
-} from "react-native-paper"
-import { db } from "../../config/firebase"
-import { useAuth } from "../../contexts/AuthContext"
-import { colors } from "../../theme/colors"
+} from "react-native-paper";
+import { db } from "../../config/firebase";
+import { useAuth } from "../../contexts/AuthContext";
+import { colors } from "../../theme/colors";
 
 interface Medication {
-  id: string
-  name: string
-  dosage: string
-  time: string
-  nextTime?: Date
-  nextTimestamp?: any // Timestamp original do Firestore
-  todaySchedules: Date[]
-  allDosesTaken: boolean
-  tipoFrequencia: number
+  id: string;
+  name: string;
+  dosage: string;
+  time: string;
+  nextTime?: Date;
+  nextTimestamp?: any; // Timestamp original do Firestore
+  todaySchedules: Date[];
+  allDosesTaken: boolean;
+  tipoFrequencia: number;
 }
 
 export default function Home() {
-  const { user } = useAuth()
-  const [medications, setMedications] = useState<Medication[]>([])
-  const [loading, setLoading] = useState(true)
-  const [showTimeModal, setShowTimeModal] = useState(false)
-  const [showCustomTimeModal, setShowCustomTimeModal] = useState(false)
-  const [selectedMedication, setSelectedMedication] = useState<Medication | null>(null)
-  const [customDate, setCustomDate] = useState("")
-  const [customTime, setCustomTime] = useState("")
+  const { user } = useAuth();
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showTimeModal, setShowTimeModal] = useState(false);
+  const [showCustomTimeModal, setShowCustomTimeModal] = useState(false);
+  const [selectedMedication, setSelectedMedication] =
+    useState<Medication | null>(null);
+  const [customDate, setCustomDate] = useState("");
+  const [customTime, setCustomTime] = useState("");
 
   useEffect(() => {
     if (user) {
-      loadTodayMedications()
+      loadTodayMedications();
     }
-  }, [user])
+  }, [user]);
 
   const loadTodayMedications = async () => {
     if (!user) {
-      console.log("❌ Usuário não autenticado")
-      setLoading(false)
-      return
+      console.log("❌ Usuário não autenticado");
+      setLoading(false);
+      return;
     }
 
     try {
-      setLoading(true)
-      const now = new Date()
-      const todayStart = new Date(now)
-      todayStart.setHours(0, 0, 0, 0)
-      const todayEnd = new Date(now)
-      todayEnd.setHours(23, 59, 59, 999)
+      setLoading(true);
+      const now = new Date();
+      const todayStart = new Date(now);
+      todayStart.setHours(0, 0, 0, 0);
+      const todayEnd = new Date(now);
+      todayEnd.setHours(23, 59, 59, 999);
 
-      console.log("=== CARREGANDO MEDICAMENTOS ===")
-      console.log("Usuário:", user.uid)
-      console.log("Hoje início:", todayStart)
-      console.log("Hoje fim:", todayEnd)
+      console.log("=== CARREGANDO MEDICAMENTOS ===");
+      console.log("Usuário:", user.uid);
+      console.log("Hoje início:", todayStart);
+      console.log("Hoje fim:", todayEnd);
 
       // Buscar apenas medicamentos do usuário logado
       const medicamentosQuery = query(
         collection(db, "medicamentos"),
         where("userId", "==", user.uid),
-        where("inativo", "==", false),
-      )
-      const medicamentosSnapshot = await getDocs(medicamentosQuery)
+        where("inativo", "==", false)
+      );
+      const medicamentosSnapshot = await getDocs(medicamentosQuery);
 
-      console.log("Medicamentos encontrados:", medicamentosSnapshot.size)
+      console.log("Medicamentos encontrados:", medicamentosSnapshot.size);
 
-      const meds: Medication[] = []
+      const meds: Medication[] = [];
 
       for (const docSnap of medicamentosSnapshot.docs) {
-        const data = docSnap.data()
-        console.log("\n--- Processando medicamento ---")
-        console.log("Nome:", data.nome)
-        console.log("Tipo frequência:", data.tipo_frequencia)
-        console.log("UserId:", data.userId)
-        console.log("Horários raw:", data.horarios)
+        const data = docSnap.data();
+        console.log("\n--- Processando medicamento ---");
+        console.log("Nome:", data.nome);
+        console.log("Tipo frequência:", data.tipo_frequencia);
+        console.log("UserId:", data.userId);
+        console.log("Horários raw:", data.horarios);
 
         // Verificar se horarios existe e é um array
         if (!data.horarios || !Array.isArray(data.horarios)) {
-          console.log("❌ Medicamento sem horários válidos")
-          continue
+          console.log("❌ Medicamento sem horários válidos");
+          continue;
         }
 
         // Processar horários
-        const scheduleData: { date: Date; timestamp: any }[] = []
+        const scheduleData: { date: Date; timestamp: any }[] = [];
 
         for (const horario of data.horarios) {
           try {
-            const date = horario.toDate()
+            const date = horario.toDate();
             scheduleData.push({
               date: date,
               timestamp: horario, // Manter o timestamp original
-            })
-            console.log("Horário processado:", date)
+            });
+            console.log("Horário processado:", date);
           } catch (error) {
-            console.log("Erro ao processar horário:", error)
+            console.log("Erro ao processar horário:", error);
           }
         }
 
         // Filtrar apenas horários de hoje
-        const todaySchedules = scheduleData.filter((item) => item.date >= todayStart && item.date <= todayEnd)
+        const todaySchedules = scheduleData.filter(
+          (item) => item.date >= todayStart && item.date <= todayEnd
+        );
 
-        console.log("Horários de hoje:", todaySchedules.length)
+        console.log("Horários de hoje:", todaySchedules.length);
 
         if (todaySchedules.length > 0) {
           // Próximo horário a ser tomado (maior ou igual à hora atual)
-          const pendingSchedules = todaySchedules.filter((item) => item.date >= now)
-          pendingSchedules.sort((a, b) => a.date.getTime() - b.date.getTime())
+          const pendingSchedules = todaySchedules.filter(
+            (item) => item.date >= now
+          );
+          pendingSchedules.sort((a, b) => a.date.getTime() - b.date.getTime());
 
-          const nextSchedule = pendingSchedules[0]
-          const allDosesTaken = !nextSchedule
+          const nextSchedule = pendingSchedules[0];
+          const allDosesTaken = !nextSchedule;
 
-          console.log("Próximo horário:", nextSchedule?.date)
-          console.log("Todas doses tomadas:", allDosesTaken)
+          console.log("Próximo horário:", nextSchedule?.date);
+          console.log("Todas doses tomadas:", allDosesTaken);
 
           meds.push({
             id: docSnap.id,
@@ -147,288 +152,323 @@ export default function Home() {
             todaySchedules: todaySchedules.map((item) => item.date),
             allDosesTaken: allDosesTaken,
             tipoFrequencia: data.tipo_frequencia || 0,
-          })
+          });
         }
       }
 
       // Ordenar medicamentos
       meds.sort((a, b) => {
-        if (a.allDosesTaken && !b.allDosesTaken) return 1
-        if (!a.allDosesTaken && b.allDosesTaken) return -1
-        if (a.nextTime && b.nextTime) return a.nextTime.getTime() - b.nextTime.getTime()
-        return 0
-      })
+        if (a.allDosesTaken && !b.allDosesTaken) return 1;
+        if (!a.allDosesTaken && b.allDosesTaken) return -1;
+        if (a.nextTime && b.nextTime)
+          return a.nextTime.getTime() - b.nextTime.getTime();
+        return 0;
+      });
 
-      console.log("=== RESULTADO FINAL ===")
-      console.log("Total de medicamentos:", meds.length)
+      console.log("=== RESULTADO FINAL ===");
+      console.log("Total de medicamentos:", meds.length);
       meds.forEach((med) => {
-        console.log(`${med.name}: ${med.allDosesTaken ? "Completo" : med.time}`)
-      })
+        console.log(
+          `${med.name}: ${med.allDosesTaken ? "Completo" : med.time}`
+        );
+      });
 
-      setMedications(meds)
+      setMedications(meds);
     } catch (error) {
-      console.error("Erro ao carregar medicamentos:", error)
-      Alert.alert("Erro", "Não foi possível carregar os medicamentos")
+      console.error("Erro ao carregar medicamentos:", error);
+      Alert.alert("Erro", "Não foi possível carregar os medicamentos");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const formatTime = (date: Date) => {
-    return `${date.getHours().toString().padStart(2, "0")}:${date.getMinutes().toString().padStart(2, "0")}`
-  }
+    return `${date.getHours().toString().padStart(2, "0")}:${date
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+  };
 
   const formatDate = (date: Date) => {
-    return `${date.getDate().toString().padStart(2, "0")}/${(date.getMonth() + 1).toString().padStart(2, "0")}/${date.getFullYear()}`
-  }
+    return `${date.getDate().toString().padStart(2, "0")}/${(
+      date.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}/${date.getFullYear()}`;
+  };
 
   const getFrequencyHours = (tipoFrequencia: number): number => {
     switch (tipoFrequencia) {
       case 0:
-        return 8 // A cada 8 horas
+        return 8; // A cada 8 horas
       case 1:
-        return 6 // A cada 6 horas
+        return 6; // A cada 6 horas
       case 2:
-        return 12 // A cada 12 horas
+        return 12; // A cada 12 horas
       case 3:
-        return 24 // A cada 24 horas
+        return 24; // A cada 24 horas
       default:
-        return 0 // Personalizado
+        return 0; // Personalizado
     }
-  }
+  };
 
   const getFrequencyText = (tipoFrequencia: number): string => {
     switch (tipoFrequencia) {
       case 0:
-        return "A cada 8 horas"
+        return "A cada 8 horas";
       case 1:
-        return "A cada 6 horas"
+        return "A cada 6 horas";
       case 2:
-        return "A cada 12 horas"
+        return "A cada 12 horas";
       case 3:
-        return "A cada 24 horas"
+        return "A cada 24 horas";
       case 4:
-        return "Personalizado"
+        return "Personalizado";
       default:
-        return "Não definido"
+        return "Não definido";
     }
-  }
+  };
 
   const handleTaken = (medication: Medication) => {
-    console.log("\n=== BOTÃO TOMADO CLICADO ===")
-    console.log("Medicamento:", medication.name)
-    console.log("Próximo horário:", medication.nextTime)
-    console.log("Timestamp:", medication.nextTimestamp)
-    console.log("Tipo frequência:", medication.tipoFrequencia)
+    console.log("\n=== BOTÃO TOMADO CLICADO ===");
+    console.log("Medicamento:", medication.name);
+    console.log("Próximo horário:", medication.nextTime);
+    console.log("Timestamp:", medication.nextTimestamp);
+    console.log("Tipo frequência:", medication.tipoFrequencia);
 
     if (!medication.nextTime || !medication.nextTimestamp) {
-      console.log("❌ Erro: Dados incompletos")
-      Alert.alert("Erro", "Não há horário definido para este medicamento")
-      return
+      console.log("❌ Erro: Dados incompletos");
+      Alert.alert("Erro", "Não há horário definido para este medicamento");
+      return;
     }
 
-    const now = new Date()
-    Alert.alert("Confirmar", `Você tomou ${medication.name} agora (${formatTime(now)})?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Confirmar",
-        onPress: () => confirmTaken(medication),
-      },
-    ])
-  }
+    const now = new Date();
+    Alert.alert(
+      "Confirmar",
+      `Você tomou ${medication.name} agora (${formatTime(now)})?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Confirmar",
+          onPress: () => confirmTaken(medication),
+        },
+      ]
+    );
+  };
 
   const confirmTaken = async (medication: Medication) => {
-    console.log("\n=== CONFIRMANDO MEDICAMENTO ===")
+    console.log("\n=== CONFIRMANDO MEDICAMENTO ===");
 
     if (!medication.nextTime || !medication.nextTimestamp) {
-      console.log("❌ Dados incompletos")
-      Alert.alert("Erro", "Dados do medicamento incompletos")
-      return
+      console.log("❌ Dados incompletos");
+      Alert.alert("Erro", "Dados do medicamento incompletos");
+      return;
     }
 
     if (!user) {
-      Alert.alert("Erro", "Usuário não autenticado")
-      return
+      Alert.alert("Erro", "Usuário não autenticado");
+      return;
     }
 
     try {
-      const now = new Date()
-      console.log("Hora atual:", now)
-      console.log("Medicamento ID:", medication.id)
-      console.log("Tipo frequência:", medication.tipoFrequencia)
-      console.log("Usuário:", user.uid)
+      const now = new Date();
+      console.log("Hora atual:", now);
+      console.log("Medicamento ID:", medication.id);
+      console.log("Tipo frequência:", medication.tipoFrequencia);
+      console.log("Usuário:", user.uid);
 
       // 1. Salvar na tabela medicamentos_dose
-      console.log("📝 Salvando dose tomada...")
+      console.log("📝 Salvando dose tomada...");
       const doseData = {
         nome: medication.name,
         data_dose: Timestamp.fromDate(now),
         userId: user.uid, // Vincular ao usuário
-      }
-      console.log("Dados da dose:", doseData)
+      };
+      console.log("Dados da dose:", doseData);
 
-      const doseDoc = await addDoc(collection(db, "medicamentos_dose"), doseData)
-      console.log("✅ Dose salva com ID:", doseDoc.id)
+      const doseDoc = await addDoc(
+        collection(db, "medicamentos_dose"),
+        doseData
+      );
+      console.log("✅ Dose salva com ID:", doseDoc.id);
 
       // 2. Remover o horário atual
-      console.log("🗑️ Removendo horário atual...")
-      const medRef = doc(db, "medicamentos", medication.id)
+      console.log("🗑️ Removendo horário atual...");
+      const medRef = doc(db, "medicamentos", medication.id);
 
-      console.log("Timestamp a ser removido:", medication.nextTimestamp)
+      console.log("Timestamp a ser removido:", medication.nextTimestamp);
       await updateDoc(medRef, {
         horarios: arrayRemove(medication.nextTimestamp),
-      })
-      console.log("✅ Horário removido")
+      });
+      console.log("✅ Horário removido");
 
       // 3. Calcular e adicionar próxima dose
       if (medication.tipoFrequencia === 4) {
-        console.log("🔧 Tipo personalizado - abrindo modal")
-        setSelectedMedication(medication)
-        setCustomDate(formatDate(now))
-        setCustomTime(formatTime(now))
-        setShowCustomTimeModal(true)
-        return
+        console.log("🔧 Tipo personalizado - abrindo modal");
+        setSelectedMedication(medication);
+        setCustomDate(formatDate(now));
+        setCustomTime(formatTime(now));
+        setShowCustomTimeModal(true);
+        return;
       } else {
-        const hoursToAdd = getFrequencyHours(medication.tipoFrequencia)
-        console.log("⏰ Horas para adicionar:", hoursToAdd)
+        const hoursToAdd = getFrequencyHours(medication.tipoFrequencia);
+        console.log("⏰ Horas para adicionar:", hoursToAdd);
 
         if (hoursToAdd === 0) {
-          console.log("❌ Tipo de frequência inválido")
-          Alert.alert("Erro", "Tipo de frequência não reconhecido")
-          return
+          console.log("❌ Tipo de frequência inválido");
+          Alert.alert("Erro", "Tipo de frequência não reconhecido");
+          return;
         }
 
-        const nextDose = new Date(now.getTime() + hoursToAdd * 60 * 60 * 1000)
-        const nextDoseTimestamp = Timestamp.fromDate(nextDose)
+        const nextDose = new Date(now.getTime() + hoursToAdd * 60 * 60 * 1000);
+        const nextDoseTimestamp = Timestamp.fromDate(nextDose);
 
-        console.log("Próxima dose:", nextDose)
-        console.log("Próximo timestamp:", nextDoseTimestamp)
+        console.log("Próxima dose:", nextDose);
+        console.log("Próximo timestamp:", nextDoseTimestamp);
 
         // Adicionar próxima dose
-        console.log("➕ Adicionando próxima dose...")
+        console.log("➕ Adicionando próxima dose...");
         await updateDoc(medRef, {
           horarios: arrayUnion(nextDoseTimestamp),
-        })
-        console.log("✅ Próxima dose adicionada")
+        });
+        console.log("✅ Próxima dose adicionada");
 
         // Recarregar medicamentos
-        console.log("🔄 Recarregando medicamentos...")
-        await loadTodayMedications()
+        console.log("🔄 Recarregando medicamentos...");
+        await loadTodayMedications();
 
-        const todayEnd = new Date()
-        todayEnd.setHours(23, 59, 59, 999)
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
         if (nextDose > todayEnd) {
-          Alert.alert("Sucesso", `Medicamento tomado! Próxima dose: ${formatDate(nextDose)} às ${formatTime(nextDose)}`)
+          Alert.alert(
+            "Sucesso",
+            `Medicamento tomado! Próxima dose: ${formatDate(
+              nextDose
+            )} às ${formatTime(nextDose)}`
+          );
         } else {
-          Alert.alert("Sucesso", `Medicamento tomado! Próxima dose hoje às ${formatTime(nextDose)}`)
+          Alert.alert(
+            "Sucesso",
+            `Medicamento tomado! Próxima dose hoje às ${formatTime(nextDose)}`
+          );
         }
       }
     } catch (error) {
-      console.error("❌ ERRO ao confirmar medicamento:", error)
-      console.error("Stack:", error.stack)
-      console.error("Message:", error.message)
-      Alert.alert("Erro", `Não foi possível confirmar o medicamento.\n\nDetalhes: ${error.message}`)
+      console.error("❌ ERRO ao confirmar medicamento:", error);
+      console.error("Stack:", error.stack);
+      console.error("Message:", error.message);
+      Alert.alert(
+        "Erro",
+        `Não foi possível confirmar o medicamento.\n\nDetalhes: ${error.message}`
+      );
     }
-  }
+  };
 
   const handleCustomTimeConfirm = async () => {
     if (!selectedMedication || !customDate || !customTime) {
-      Alert.alert("Erro", "Por favor, preencha data e horário")
-      return
+      Alert.alert("Erro", "Por favor, preencha data e horário");
+      return;
     }
 
     try {
-      console.log("Confirmando horário personalizado...")
+      console.log("Confirmando horário personalizado...");
 
       // Validar formato
-      const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/
-      const timeRegex = /^\d{2}:\d{2}$/
+      const dateRegex = /^\d{2}\/\d{2}\/\d{4}$/;
+      const timeRegex = /^\d{2}:\d{2}$/;
 
       if (!dateRegex.test(customDate) || !timeRegex.test(customTime)) {
-        Alert.alert("Erro", "Formato inválido. Use DD/MM/AAAA e HH:MM")
-        return
+        Alert.alert("Erro", "Formato inválido. Use DD/MM/AAAA e HH:MM");
+        return;
       }
 
       // Converter para Date
-      const [day, month, year] = customDate.split("/").map(Number)
-      const [hours, minutes] = customTime.split(":").map(Number)
-      const nextDose = new Date(year, month - 1, day, hours, minutes)
-      const nextDoseTimestamp = Timestamp.fromDate(nextDose)
+      const [day, month, year] = customDate.split("/").map(Number);
+      const [hours, minutes] = customTime.split(":").map(Number);
+      const nextDose = new Date(year, month - 1, day, hours, minutes);
+      const nextDoseTimestamp = Timestamp.fromDate(nextDose);
 
-      console.log("Próxima dose personalizada:", nextDose)
+      console.log("Próxima dose personalizada:", nextDose);
 
-      const medRef = doc(db, "medicamentos", selectedMedication.id)
+      const medRef = doc(db, "medicamentos", selectedMedication.id);
       await updateDoc(medRef, {
         horarios: arrayUnion(nextDoseTimestamp),
-      })
+      });
 
-      await loadTodayMedications()
+      await loadTodayMedications();
 
-      setShowCustomTimeModal(false)
-      setSelectedMedication(null)
-      setCustomDate("")
-      setCustomTime("")
+      setShowCustomTimeModal(false);
+      setSelectedMedication(null);
+      setCustomDate("");
+      setCustomTime("");
 
-      Alert.alert("Sucesso", `Medicamento tomado! Próxima dose: ${formatDate(nextDose)} às ${formatTime(nextDose)}`)
+      Alert.alert(
+        "Sucesso",
+        `Medicamento tomado! Próxima dose: ${formatDate(
+          nextDose
+        )} às ${formatTime(nextDose)}`
+      );
     } catch (error) {
-      console.error("Erro ao definir horário personalizado:", error)
-      Alert.alert("Erro", "Não foi possível definir o horário personalizado")
+      console.error("Erro ao definir horário personalizado:", error);
+      Alert.alert("Erro", "Não foi possível definir o horário personalizado");
     }
-  }
+  };
 
   const handlePostpone = (medication: Medication) => {
-    setSelectedMedication(medication)
-    setShowTimeModal(true)
-  }
+    setSelectedMedication(medication);
+    setShowTimeModal(true);
+  };
 
   const getAvailableTimes = () => {
-    const now = new Date()
-    const times = []
+    const now = new Date();
+    const times = [];
 
     for (let i = 1; i <= 12; i++) {
-      const newTime = new Date(now.getTime() + i * 30 * 60 * 1000)
-      const hours = newTime.getHours()
-      const minutes = newTime.getMinutes()
+      const newTime = new Date(now.getTime() + i * 30 * 60 * 1000);
+      const hours = newTime.getHours();
+      const minutes = newTime.getMinutes();
 
       if (hours < 24) {
-        const timeString = `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`
-        times.push(timeString)
+        const timeString = `${hours.toString().padStart(2, "0")}:${minutes
+          .toString()
+          .padStart(2, "0")}`;
+        times.push(timeString);
       }
     }
 
-    return times
-  }
+    return times;
+  };
 
   const selectNewTime = async (newTimeString: string) => {
-    if (!selectedMedication || !selectedMedication.nextTimestamp) return
+    if (!selectedMedication || !selectedMedication.nextTimestamp) return;
 
     try {
-      const [hours, minutes] = newTimeString.split(":").map(Number)
-      const now = new Date()
-      const newTime = new Date(now)
-      newTime.setHours(hours, minutes, 0, 0)
-      const newTimeTimestamp = Timestamp.fromDate(newTime)
+      const [hours, minutes] = newTimeString.split(":").map(Number);
+      const now = new Date();
+      const newTime = new Date(now);
+      newTime.setHours(hours, minutes, 0, 0);
+      const newTimeTimestamp = Timestamp.fromDate(newTime);
 
-      const medRef = doc(db, "medicamentos", selectedMedication.id)
+      const medRef = doc(db, "medicamentos", selectedMedication.id);
 
       await updateDoc(medRef, {
         horarios: arrayRemove(selectedMedication.nextTimestamp),
-      })
+      });
       await updateDoc(medRef, {
         horarios: arrayUnion(newTimeTimestamp),
-      })
+      });
 
-      await loadTodayMedications()
-      Alert.alert("Sucesso", "Horário atualizado com sucesso!")
+      await loadTodayMedications();
+      Alert.alert("Sucesso", "Horário atualizado com sucesso!");
     } catch (error) {
-      console.error("Erro ao adiar medicamento:", error)
-      Alert.alert("Erro", "Não foi possível adiar o medicamento")
+      console.error("Erro ao adiar medicamento:", error);
+      Alert.alert("Erro", "Não foi possível adiar o medicamento");
     }
 
-    setShowTimeModal(false)
-    setSelectedMedication(null)
-  }
+    setShowTimeModal(false);
+    setSelectedMedication(null);
+  };
 
   // Se não há usuário autenticado
   if (!user) {
@@ -436,7 +476,7 @@ export default function Home() {
       <View style={[styles.container, styles.loadingContainer]}>
         <Text style={styles.loadingText}>Usuário não autenticado</Text>
       </View>
-    )
+    );
   }
 
   if (loading) {
@@ -445,14 +485,13 @@ export default function Home() {
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Carregando medicamentos...</Text>
       </View>
-    )
+    );
   }
 
   return (
     <View style={styles.container}>
       <Appbar.Header style={styles.header}>
         <Appbar.Content title="Dose Certa" titleStyle={styles.headerTitle} />
-        <Appbar.Action icon="cog" onPress={() => {}} />
       </Appbar.Header>
 
       <ScrollView
@@ -476,16 +515,25 @@ export default function Home() {
           medications.map((medication) => (
             <Card
               key={medication.id}
-              style={[styles.medicationCard, medication.allDosesTaken && styles.completedMedicationCard]}
+              style={[
+                styles.medicationCard,
+                medication.allDosesTaken && styles.completedMedicationCard,
+              ]}
             >
               <Card.Content>
                 <View style={styles.medicationHeader}>
                   <View style={styles.medicationInfo}>
                     <View
-                      style={[styles.pillIconContainer, medication.allDosesTaken && styles.completedPillIconContainer]}
+                      style={[
+                        styles.pillIconContainer,
+                        medication.allDosesTaken &&
+                          styles.completedPillIconContainer,
+                      ]}
                     >
                       <IconButton
-                        icon={medication.allDosesTaken ? "check-circle" : "pill"}
+                        icon={
+                          medication.allDosesTaken ? "check-circle" : "pill"
+                        }
                         size={24}
                         iconColor={colors.primary}
                         style={{ margin: 0 }}
@@ -494,13 +542,19 @@ export default function Home() {
                     <View style={styles.medicationDetails}>
                       <Text
                         variant="titleMedium"
-                        style={[styles.medicationName, medication.allDosesTaken && styles.completedText]}
+                        style={[
+                          styles.medicationName,
+                          medication.allDosesTaken && styles.completedText,
+                        ]}
                       >
                         {medication.name}
                       </Text>
                       <Text
                         variant="bodyMedium"
-                        style={[styles.medicationDosage, medication.allDosesTaken && styles.completedText]}
+                        style={[
+                          styles.medicationDosage,
+                          medication.allDosesTaken && styles.completedText,
+                        ]}
                       >
                         {medication.dosage}
                       </Text>
@@ -516,7 +570,12 @@ export default function Home() {
                   )}
                   {medication.allDosesTaken && (
                     <View style={styles.completedBadge}>
-                      <IconButton icon="check-circle" size={32} iconColor={colors.primary} style={{ margin: 0 }} />
+                      <IconButton
+                        icon="check-circle"
+                        size={32}
+                        iconColor={colors.primary}
+                        style={{ margin: 0 }}
+                      />
                     </View>
                   )}
                 </View>
@@ -570,7 +629,10 @@ export default function Home() {
             Escolha um dos horários disponíveis:
           </Text>
 
-          <ScrollView style={styles.timeList} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.timeList}
+            showsVerticalScrollIndicator={false}
+          >
             {getAvailableTimes().map((time, index) => (
               <View key={time}>
                 <List.Item
@@ -584,7 +646,11 @@ export default function Home() {
             ))}
           </ScrollView>
 
-          <Button mode="outlined" onPress={() => setShowTimeModal(false)} style={styles.cancelButton}>
+          <Button
+            mode="outlined"
+            onPress={() => setShowTimeModal(false)}
+            style={styles.cancelButton}
+          >
             Cancelar
           </Button>
         </Modal>
@@ -621,17 +687,25 @@ export default function Home() {
           />
 
           <View style={styles.customModalButtons}>
-            <Button mode="outlined" onPress={() => setShowCustomTimeModal(false)} style={styles.cancelButton}>
+            <Button
+              mode="outlined"
+              onPress={() => setShowCustomTimeModal(false)}
+              style={styles.cancelButton}
+            >
               Cancelar
             </Button>
-            <Button mode="contained" onPress={handleCustomTimeConfirm} style={styles.confirmButton}>
+            <Button
+              mode="contained"
+              onPress={handleCustomTimeConfirm}
+              style={styles.confirmButton}
+            >
               Confirmar
             </Button>
           </View>
         </Modal>
       </Portal>
     </View>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -800,4 +874,4 @@ const styles = StyleSheet.create({
   confirmButton: {
     flex: 1,
   },
-})
+});

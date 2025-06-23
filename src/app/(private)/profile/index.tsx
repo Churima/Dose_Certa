@@ -4,12 +4,13 @@ import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const ProfileScreen = () => {
   const router = useRouter();
   const { logout } = useAuth();
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Perfil</Text>
       </View>
@@ -18,7 +19,7 @@ const ProfileScreen = () => {
         <TouchableOpacity
           style={styles.optionItem}
           onPress={() => {
-            router.push('/profile/my-data');
+            router.push("/profile/my-data");
           }}
         >
           <Ionicons name="person-outline" size={24} color="black" />
@@ -32,7 +33,7 @@ const ProfileScreen = () => {
 
         <TouchableOpacity
           style={styles.optionItem}
-          onPress={() => router.push('/profile/settings')}
+          onPress={() => router.push("/profile/settings")}
         >
           <Ionicons name="settings-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
@@ -44,10 +45,10 @@ const ProfileScreen = () => {
         </TouchableOpacity>
       </View>
 
-      <Button mode="contained" onPress={logout}>
+      <Button mode="contained" onPress={logout} style={styles.logoutButton}>
         <Text style={styles.logoutButtonText}>Sair da Conta</Text>
       </Button>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -55,6 +56,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingHorizontal: 16,
   },
   header: {
     flexDirection: "row",
@@ -66,7 +68,6 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginLeft: 16,
   },
   optionsContainer: {
     marginTop: 20,
@@ -91,12 +92,7 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   logoutButton: {
-    backgroundColor: "#62B1F6",
-    padding: 15,
-    borderRadius: 8,
-    marginHorizontal: 16,
     marginTop: 30,
-    alignItems: "center",
   },
   logoutButtonText: {
     fontSize: 16,
