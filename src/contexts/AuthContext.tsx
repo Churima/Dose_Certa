@@ -1,4 +1,4 @@
-import { SplashScreen } from "expo-router";
+import { SplashScreen, useRouter } from "expo-router";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -22,11 +22,13 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     SplashScreen.preventAutoHideAsync();
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      router.replace("/sign-in");
       setUser(user);
       setLoading(false);
       SplashScreen.hideAsync();
