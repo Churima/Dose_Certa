@@ -56,6 +56,8 @@ export default function TabsLayout() {
       <Tabs.Screen name="medicines" />
       <Tabs.Screen name="pharmacies" />
       <Tabs.Screen name="profile/index" />
+
+      <Tabs.Screen name="medicine-register" options={{}} />
     </Tabs>
   );
 }

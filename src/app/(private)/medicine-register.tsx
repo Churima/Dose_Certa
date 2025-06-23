@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from "expo-router";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
 import {
   addDoc,
   collection,
@@ -10,7 +10,8 @@ import {
 import React, { useEffect, useState } from "react";
 import {
   Alert,
-  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -33,6 +34,7 @@ import {
   scheduleMedicineNotifications,
 } from "../../notification/notification";
 
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { TimeList } from "../../components/TimeList";
 
 const FREQUENCIES = [
@@ -48,16 +50,28 @@ export default function MedicineRegisterScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [name, setName] = useState("");
-  const [dose, setDose] = useState("");
-  const [unit, setUnit] = useState("");
-  const [frequency, setFrequency] = useState("");
-  const [showFrequency, setShowFrequency] = useState(false);
-  const [times, setTimes] = useState<string[]>([]);
-  const [showTimeDialog, setShowTimeDialog] = useState(false);
-  const [newTime, setNewTime] = useState("");
-  const [instructions, setInstructions] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const initialFormState = {
+    name: "",
+    dose: "",
+    unit: "",
+    frequency: "",
+    showFrequency: false,
+    times: [] as string[],
+    showTimeDialog: false,
+    newTime: "",
+    instructions: "",
+    isSaving: false,
+  };
+
+  const [form, setForm] = useState(initialFormState);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      return () => {
+        setForm(initialFormState);
+      };
+    }, [])
+  );
 
   useEffect(() => {
     const loadMedicine = async () => {
@@ -77,18 +91,20 @@ export default function MedicineRegisterScreen() {
               return;
             }
 
-            setName(data.nome || "");
-            setDose(data.dose?.toString() || "");
-            setUnit(data.unidade || "");
-            setFrequency(FREQUENCIES[data.tipo_frequencia] || "");
-            setInstructions(data.instrucoes_adicionais || "");
-            const horarios = (data.horarios || []).map((h: Timestamp) => {
-              const date = h.toDate();
-              return `${String(date.getHours()).padStart(2, "0")}:${String(
-                date.getMinutes()
-              ).padStart(2, "0")}`;
-            });
-            setTimes(horarios);
+            setForm((prev) => ({
+              ...prev,
+              name: data.nome || "",
+              dose: data.dose?.toString() || "",
+              unit: data.unidade || "",
+              frequency: FREQUENCIES[data.tipo_frequencia] || "",
+              instructions: data.instrucoes_adicionais || "",
+              times: (data.horarios || []).map((h: Timestamp) => {
+                const date = h.toDate();
+                return `${String(date.getHours()).padStart(2, "0")}:${String(
+                  date.getMinutes()
+                ).padStart(2, "0")}`;
+              }),
+            }));
           }
         } catch (error) {
           console.error("Erro ao carregar medicamento:", error);
@@ -104,31 +120,33 @@ export default function MedicineRegisterScreen() {
   }, [medicineId, user]);
 
   const handleNameChange = (text: string) => {
-    if (text.length > 0) {
-      setName(text.charAt(0).toUpperCase() + text.slice(1));
-    } else {
-      setName("");
-    }
+    setForm((prev) => ({
+      ...prev,
+      name: text.length > 0 ? text.charAt(0).toUpperCase() + text.slice(1) : "",
+    }));
   };
 
   const handleDoseChange = (text: string) => {
     if (/^[0-9]*\.?[0-9]*$/.test(text)) {
-      setDose(text);
+      setForm((prev) => ({ ...prev, dose: text }));
     }
   };
 
   const handleTimeChange = (text: string) => {
     const cleaned = text.replace(/[^\d]/g, "");
     if (cleaned.length <= 2) {
-      setNewTime(cleaned);
+      setForm((prev) => ({ ...prev, newTime: cleaned }));
     } else {
-      setNewTime(`${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}`);
+      setForm((prev) => ({
+        ...prev,
+        newTime: `${cleaned.slice(0, 2)}:${cleaned.slice(2, 4)}`,
+      }));
     }
   };
 
   const handleAddTime = () => {
-    if (newTime) {
-      let timeToAdd = newTime;
+    if (form.newTime) {
+      let timeToAdd = form.newTime;
 
       if (/^\d{1,2}$/.test(timeToAdd)) {
         timeToAdd = `${timeToAdd}:00`;
@@ -159,14 +177,20 @@ export default function MedicineRegisterScreen() {
         minute
       ).padStart(2, "0")}`;
 
-      setTimes([...times, formattedTime]);
-      setNewTime("");
-      setShowTimeDialog(false);
+      setForm((prev) => ({
+        ...prev,
+        times: [...prev.times, formattedTime],
+        newTime: "",
+        showTimeDialog: false,
+      }));
     }
   };
 
   const handleRemoveTime = (idx: number) => {
-    setTimes(times.filter((_, i) => i !== idx));
+    setForm((prev) => ({
+      ...prev,
+      times: prev.times.filter((_, i) => i !== idx),
+    }));
   };
 
   const handleSave = async () => {
@@ -175,7 +199,7 @@ export default function MedicineRegisterScreen() {
       return;
     }
 
-    if (!name || !dose || !unit || !frequency) {
+    if (!form.name || !form.dose || !form.unit || !form.frequency) {
       Alert.alert("Erro", "Por favor, preencha todos os campos obrigatórios.");
       return;
     }
@@ -197,9 +221,9 @@ export default function MedicineRegisterScreen() {
     }
     // --- FIM DA LÓGICA DE PERMISSÃO ---
 
-    setIsSaving(true);
+    setForm((prev) => ({ ...prev, isSaving: true }));
     try {
-      const horariosTimestamps = times.map((t) => {
+      const horariosTimestamps = form.times.map((t) => {
         const [hour, minute] = t.split(":").map(Number);
         const date = new Date();
         date.setHours(hour, minute, 0, 0);
@@ -207,13 +231,13 @@ export default function MedicineRegisterScreen() {
       });
 
       const medicineData = {
-        nome: name,
-        dose: Number(dose),
-        unidade: unit,
-        tipo_frequencia: FREQUENCIES.indexOf(frequency),
+        nome: form.name,
+        dose: Number(form.dose),
+        unidade: form.unit,
+        tipo_frequencia: FREQUENCIES.indexOf(form.frequency),
         horarios: horariosTimestamps,
         inativo: false,
-        instrucoes_adicionais: instructions,
+        instrucoes_adicionais: form.instructions,
         userId: user.uid,
       };
 
@@ -251,24 +275,27 @@ export default function MedicineRegisterScreen() {
       console.error("Erro ao salvar medicamento:", error);
       Alert.alert("Erro", "Não foi possível salvar as alterações.");
     } finally {
-      setIsSaving(false);
+      setForm((prev) => ({ ...prev, isSaving: false }));
     }
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
       <View style={styles.header}>
         <Text variant="headlineMedium" style={styles.headerTitle}>
           {medicineId ? "Editar medicamento" : "Novo medicamento"}
         </Text>
       </View>
-      <ScrollView
+      <KeyboardAwareScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
       >
         <TextInput
           label="Nome do medicamento"
-          value={name}
+          value={form.name}
           onChangeText={handleNameChange}
           style={styles.input}
           mode="outlined"
@@ -276,7 +303,7 @@ export default function MedicineRegisterScreen() {
         <View style={styles.row}>
           <TextInput
             label="Dose"
-            value={dose}
+            value={form.dose}
             onChangeText={handleDoseChange}
             style={[styles.input, { flex: 1, marginRight: 8 }]}
             mode="outlined"
@@ -284,19 +311,21 @@ export default function MedicineRegisterScreen() {
           />
           <TextInput
             label="Unidade"
-            value={unit}
-            onChangeText={(text) => setUnit(text.toLowerCase())}
+            value={form.unit}
+            onChangeText={(text) =>
+              setForm((prev) => ({ ...prev, unit: text.toLowerCase() }))
+            }
             style={[styles.input, { flex: 1, marginLeft: 8 }]}
             mode="outlined"
           />
         </View>
         <TouchableOpacity
-          onPress={() => setShowFrequency(true)}
+          onPress={() => setForm((prev) => ({ ...prev, showFrequency: true }))}
           activeOpacity={0.7}
         >
           <TextInput
             label="Frequência"
-            value={frequency}
+            value={form.frequency}
             style={styles.input}
             mode="outlined"
             editable={false}
@@ -306,8 +335,10 @@ export default function MedicineRegisterScreen() {
         </TouchableOpacity>
         <Portal>
           <Dialog
-            visible={showFrequency}
-            onDismiss={() => setShowFrequency(false)}
+            visible={form.showFrequency}
+            onDismiss={() =>
+              setForm((prev) => ({ ...prev, showFrequency: false }))
+            }
           >
             <Dialog.Title>Selecione a frequência</Dialog.Title>
             <Dialog.Content>
@@ -316,8 +347,11 @@ export default function MedicineRegisterScreen() {
                   key={freq}
                   title={freq}
                   onPress={() => {
-                    setFrequency(freq);
-                    setShowFrequency(false);
+                    setForm((prev) => ({
+                      ...prev,
+                      frequency: freq,
+                      showFrequency: false,
+                    }));
                   }}
                 />
               ))}
@@ -332,22 +366,26 @@ export default function MedicineRegisterScreen() {
           <IconButton
             icon="plus"
             size={20}
-            onPress={() => setShowTimeDialog(true)}
+            onPress={() =>
+              setForm((prev) => ({ ...prev, showTimeDialog: true }))
+            }
           />
         </View>
-        {times.length > 0 && (
-          <TimeList times={times} onRemove={handleRemoveTime} />
+        {form.times.length > 0 && (
+          <TimeList times={form.times} onRemove={handleRemoveTime} />
         )}
         <Portal>
           <Dialog
-            visible={showTimeDialog}
-            onDismiss={() => setShowTimeDialog(false)}
+            visible={form.showTimeDialog}
+            onDismiss={() =>
+              setForm((prev) => ({ ...prev, showTimeDialog: false }))
+            }
           >
             <Dialog.Title>Adicionar horário</Dialog.Title>
             <Dialog.Content>
               <TextInput
                 label="Horário (HH:MM)"
-                value={newTime}
+                value={form.newTime}
                 onChangeText={handleTimeChange}
                 keyboardType="number-pad"
                 maxLength={5}
@@ -355,15 +393,23 @@ export default function MedicineRegisterScreen() {
               />
             </Dialog.Content>
             <Dialog.Actions>
-              <Button onPress={() => setShowTimeDialog(false)}>Cancelar</Button>
+              <Button
+                onPress={() =>
+                  setForm((prev) => ({ ...prev, showTimeDialog: false }))
+                }
+              >
+                Cancelar
+              </Button>
               <Button onPress={handleAddTime}>Adicionar</Button>
             </Dialog.Actions>
           </Dialog>
         </Portal>
         <TextInput
           label="Instruções adicionais (opcional)"
-          value={instructions}
-          onChangeText={setInstructions}
+          value={form.instructions}
+          onChangeText={(text) =>
+            setForm((prev) => ({ ...prev, instructions: text }))
+          }
           style={styles.input}
           mode="outlined"
           multiline
@@ -374,20 +420,19 @@ export default function MedicineRegisterScreen() {
           style={styles.saveButton}
           onPress={handleSave}
           contentStyle={{ height: 48 }}
-          disabled={isSaving}
-          loading={isSaving}
+          disabled={form.isSaving}
+          loading={form.isSaving}
         >
           {medicineId ? "Salvar alterações" : "Salvar"}
         </Button>
-      </ScrollView>
-    </View>
+      </KeyboardAwareScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: "#fff",
     flexGrow: 1,
   },
   header: {

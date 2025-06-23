@@ -25,10 +25,12 @@ const styles = StyleSheet.create({
   timeItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f2f4f8",
+    backgroundColor: "#FFF",
+    borderColor: "#000",
+    borderWidth: 1,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
-    marginBottom: 4,
+    marginBottom: 10,
   },
 });
