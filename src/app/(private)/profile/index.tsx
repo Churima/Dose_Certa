@@ -1,12 +1,12 @@
 import { useAuth } from "@/src/contexts/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation } from "expo-router";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Button } from "react-native-paper";
 
 const ProfileScreen = () => {
-  const navigation = useNavigation();
+  const router = useRouter();
   const { logout } = useAuth();
   return (
     <View style={styles.container}>
@@ -18,7 +18,7 @@ const ProfileScreen = () => {
         <TouchableOpacity
           style={styles.optionItem}
           onPress={() => {
-            navigation.navigate("(private)/");
+            router.push('/profile/my-data');
           }}
         >
           <Ionicons name="person-outline" size={24} color="black" />
@@ -32,7 +32,7 @@ const ProfileScreen = () => {
 
         <TouchableOpacity
           style={styles.optionItem}
-          onPress={() => navigation.navigate("Settings")}
+          onPress={() => router.push('/profile/settings')}
         >
           <Ionicons name="settings-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
