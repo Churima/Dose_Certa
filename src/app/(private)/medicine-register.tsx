@@ -59,13 +59,22 @@ export default function MedicineRegisterScreen() {
 
   useEffect(() => {
     const loadMedicine = async () => {
-      if (medicineId) {
+      if (medicineId && user) {
         try {
           const ref = doc(db, "medicamentos", String(medicineId));
           const snapshot = await getDoc(ref);
           const data = snapshot.data();
 
           if (data) {
+            if (data.userId !== user.uid) {
+              Alert.alert(
+                "Erro",
+                "Você não tem permissão para editar este medicamento."
+              );
+              router.push("/medicines");
+              return;
+            }
+
             setName(data.nome || "");
             setDose(data.dose?.toString() || "");
             setUnit(data.unidade || "");
@@ -90,7 +99,7 @@ export default function MedicineRegisterScreen() {
     };
 
     loadMedicine();
-  }, [medicineId]);
+  }, [medicineId, user]);
 
   const handleNameChange = (text: string) => {
     if (text.length > 0) {
@@ -205,6 +214,7 @@ export default function MedicineRegisterScreen() {
         instrucoes_adicionais: instructions,
         userId: user.uid,
       };
+
 
       if (medicineId) {
         const ref = doc(db, "medicamentos", String(medicineId));

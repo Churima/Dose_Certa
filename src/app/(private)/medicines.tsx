@@ -1,9 +1,11 @@
 import { db } from "@/src/config/firebase";
+import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { FAB, IconButton, Text } from "react-native-paper";
+import { useAuth } from "../../contexts/AuthContext";
 
 const FREQUENCIES = [
   "A cada 6 horas",
@@ -15,24 +17,43 @@ const FREQUENCIES = [
 
 export default function MedicinesScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [medicines, setMedicines] = useState<any[]>([]);
 
   const fetchMedicines = async () => {
+    if (!user) {
+      return;
+    }
+
     try {
-      const snapshot = await getDocs(collection(db, "medicamentos"));
-      const data = snapshot.docs
+      const allSnapshot = await getDocs(collection(db, "medicamentos"));
+
+      const data = allSnapshot.docs
         .map((doc) => {
           const d = doc.data();
+
           return {
             id: doc.id,
             name: d.nome,
             frequency: FREQUENCIES[d.tipo_frequencia] ?? "Desconhecida",
             dosage: `${d.dose}${d.unidade}`,
             inativo: d.inativo ?? false,
+            userId: d.userId, 
           };
         })
-        .filter((med) => !med.inativo);
+        .filter((med) => {
 
+          const isActive = !med.inativo;
+          const belongsToUser = med.userId === user.uid;
+          const isOldMedicine = !med.userId; 
+          
+          return isActive && (belongsToUser || isOldMedicine);
+        });
+
+      data.forEach((med, index) => {
+        console.log(`${index + 1}. ${med.name} (${med.userId || 'sem userId'})`);
+      });
+      
       setMedicines(data);
     } catch (error) {
       console.error("Erro ao buscar medicamentos:", error);
@@ -40,11 +61,47 @@ export default function MedicinesScreen() {
   };
 
   useEffect(() => {
-    fetchMedicines();
-  }, []);
+    if (user) {
+      fetchMedicines();
+    }
+  }, [user]);
 
-  const handleEdit = (id: string) => {
-    router.push({ pathname: "/medicine-register", params: { id } });
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchMedicines();
+      }
+    }, [user])
+  );
+
+  const handleEdit = async (id: string) => {
+    if (!user) {
+      Alert.alert("Erro", "Usuário não autenticado");
+      return;
+    }
+
+    try {
+      const ref = doc(db, "medicamentos", id);
+      const snapshot = await getDoc(ref);
+      const data = snapshot.data();
+      
+      if (!data) {
+        Alert.alert("Erro", "Medicamento não encontrado.");
+        return;
+      }
+
+      if (!data.userId) {
+        await updateDoc(ref, { userId: user.uid });
+      } else if (data.userId !== user.uid) {
+        Alert.alert("Erro", "Você não tem permissão para editar este medicamento.");
+        return;
+      }
+
+      router.push({ pathname: "/medicine-register", params: { id } });
+    } catch (error) {
+      console.error("Erro ao verificar permissão:", error);
+      Alert.alert("Erro", "Não foi possível verificar as permissões.");
+    }
   };
 
   const handleAdd = () => {
@@ -52,6 +109,11 @@ export default function MedicinesScreen() {
   };
 
   const handleSoftDelete = async (id: string) => {
+    if (!user) {
+      Alert.alert("Erro", "Usuário não autenticado");
+      return;
+    }
+
     Alert.alert(
       "Excluir medicamento",
       "Tem certeza que deseja excluir este medicamento?",
@@ -63,10 +125,24 @@ export default function MedicinesScreen() {
           onPress: async () => {
             try {
               const ref = doc(db, "medicamentos", id);
+              const snapshot = await getDoc(ref);
+              const data = snapshot.data();
+              
+              if (!data) {
+                Alert.alert("Erro", "Medicamento não encontrado.");
+                return;
+              }
+
+              if (data.userId && data.userId !== user.uid) {
+                Alert.alert("Erro", "Você não tem permissão para excluir este medicamento.");
+                return;
+              }
+
               await updateDoc(ref, { inativo: true });
               fetchMedicines();
             } catch (error) {
               console.error("Erro ao excluir medicamento:", error);
+              Alert.alert("Erro", "Não foi possível excluir o medicamento.");
             }
           },
         },
