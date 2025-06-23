@@ -1,12 +1,11 @@
-
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from 'expo-router';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Button } from "react-native-paper";
 
 const ProfileScreen = () => {
-    const navigation = useNavigation();
+    const router = useRouter();
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -15,7 +14,7 @@ const ProfileScreen = () => {
 
       <View style={styles.optionsContainer}>
         <TouchableOpacity style={styles.optionItem} onPress={() => {
-            navigation.navigate('MyData' as never)
+            router.push('/profile/my-data');
         }}>
           <Ionicons name="person-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
@@ -24,7 +23,7 @@ const ProfileScreen = () => {
           </View>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.optionItem} onPress={() => navigation.navigate('Settings' as never)}>
+        <TouchableOpacity style={styles.optionItem} onPress={() => router.push('/profile/settings')}>
           <Ionicons name="settings-outline" size={24} color="black" />
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Configurações</Text>

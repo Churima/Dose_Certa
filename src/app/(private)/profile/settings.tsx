@@ -1,20 +1,17 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { IconButton, Text, Switch, Button, Divider } from 'react-native-paper';
-import type { StackNavigationProp } from '@react-navigation/stack';
+import { StyleSheet, View } from 'react-native';
+import { Button, Divider, IconButton, Switch, Text } from 'react-native-paper';
 
-type SettingsScreenProps = {
-  navigation: StackNavigationProp<any>;
-};
-
-const SettingsScreen = ({ navigation }: SettingsScreenProps) => {
+const SettingsScreen = () => {
+  const router = useRouter();
   const [isRemindersEnabled, setIsRemindersEnabled] = React.useState(false);
 
   return (
     <View style={styles.container}>
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <IconButton icon="arrow-left" size={24} onPress={() => navigation.goBack()} />
+        <IconButton icon="arrow-left" size={24} onPress={() => router.push('/profile')} />
         <Text variant="headlineSmall" style={styles.headerTitle}>Notificações</Text>
       </View>
 

@@ -1,19 +1,10 @@
+import { useRouter } from 'expo-router';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { IconButton, Text, TextInput, Button } from 'react-native-paper';
-import { StackNavigationProp } from '@react-navigation/stack';
+import { StyleSheet, View } from 'react-native';
+import { Button, IconButton, Text, TextInput } from 'react-native-paper';
 
-type RootStackParamList = {
-  MyData: undefined;
-};
-
-type MyDataScreenNavigationProp = StackNavigationProp<RootStackParamList, 'MyData'>;
-
-type Props = {
-  navigation: MyDataScreenNavigationProp;
-};
-
-const MyDataScreen: React.FC<Props> = ({ navigation }) => {
+const MyDataScreen: React.FC = () => {
+  const router = useRouter();
   const [nome, setNome] = React.useState('');
   const [email, setEmail] = React.useState('');
   const [telefone, setTelefone] = React.useState('');
@@ -23,7 +14,7 @@ const MyDataScreen: React.FC<Props> = ({ navigation }) => {
     <View style={styles.container}>
       {/* Cabeçalho */}
       <View style={styles.header}>
-        <IconButton icon="arrow-left" size={24} onPress={() => navigation.goBack()} />
+        <IconButton icon="arrow-left" size={24} onPress={() => router.push('/profile')} />
         <Text variant="headlineSmall" style={styles.headerTitle}>Meus Dados</Text>
       </View>
 
