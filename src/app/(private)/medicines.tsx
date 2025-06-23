@@ -1,16 +1,16 @@
-import { db } from '@/src/config/firebase';
-import { useRouter } from 'expo-router';
-import { collection, doc, getDocs, updateDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { FAB, IconButton, Text } from 'react-native-paper';
+import { db } from "@/src/config/firebase";
+import { useRouter } from "expo-router";
+import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
+import { FAB, IconButton, Text } from "react-native-paper";
 
 const FREQUENCIES = [
-  'A cada 6 horas',
-  'A cada 8 horas',
-  'A cada 12 horas',
-  'A cada 24 horas',
-  'Personalizado',
+  "A cada 6 horas",
+  "A cada 8 horas",
+  "A cada 12 horas",
+  "A cada 24 horas",
+  "Personalizado",
 ];
 
 export default function MedicinesScreen() {
@@ -19,14 +19,14 @@ export default function MedicinesScreen() {
 
   const fetchMedicines = async () => {
     try {
-      const snapshot = await getDocs(collection(db, 'medicamentos'));
+      const snapshot = await getDocs(collection(db, "medicamentos"));
       const data = snapshot.docs
         .map((doc) => {
           const d = doc.data();
           return {
             id: doc.id,
             name: d.nome,
-            frequency: FREQUENCIES[d.tipo_frequencia] ?? 'Desconhecida',
+            frequency: FREQUENCIES[d.tipo_frequencia] ?? "Desconhecida",
             dosage: `${d.dose}${d.unidade}`,
             inativo: d.inativo ?? false,
           };
@@ -35,7 +35,7 @@ export default function MedicinesScreen() {
 
       setMedicines(data);
     } catch (error) {
-      console.error('Erro ao buscar medicamentos:', error);
+      console.error("Erro ao buscar medicamentos:", error);
     }
   };
 
@@ -44,29 +44,29 @@ export default function MedicinesScreen() {
   }, []);
 
   const handleEdit = (id: string) => {
-    router.push({ pathname: '/medicine-register', params: { id } });
+    router.push({ pathname: "/medicine-register", params: { id } });
   };
 
   const handleAdd = () => {
-    router.push({ pathname: '/medicine-register' });
+    router.push({ pathname: "/medicine-register" });
   };
 
   const handleSoftDelete = async (id: string) => {
     Alert.alert(
-      'Excluir medicamento',
-      'Tem certeza que deseja excluir este medicamento?',
+      "Excluir medicamento",
+      "Tem certeza que deseja excluir este medicamento?",
       [
-        { text: 'Cancelar', style: 'cancel' },
+        { text: "Cancelar", style: "cancel" },
         {
-          text: 'Excluir',
-          style: 'destructive',
+          text: "Excluir",
+          style: "destructive",
           onPress: async () => {
             try {
-              const ref = doc(db, 'medicamentos', id);
+              const ref = doc(db, "medicamentos", id);
               await updateDoc(ref, { inativo: true });
-              fetchMedicines();  
+              fetchMedicines();
             } catch (error) {
-              console.error('Erro ao excluir medicamento:', error);
+              console.error("Erro ao excluir medicamento:", error);
             }
           },
         },
@@ -109,39 +109,39 @@ export default function MedicinesScreen() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 8,
   },
   headerTitle: {
-    fontWeight: 'bold',
+    fontSize: 20,
   },
   medicineItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   medicineName: {
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
   },
   medicineFrequency: {
-    color: '#4a6fa5',
+    color: "#4a6fa5",
     fontSize: 13,
   },
   medicineDosage: {
-    color: '#8a8a8a',
+    color: "#8a8a8a",
     fontSize: 13,
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     right: 24,
-    bottom: 80,
-    backgroundColor: '#4a90e2',
+    bottom: 40,
+    backgroundColor: "#4a90e2",
   },
 });
