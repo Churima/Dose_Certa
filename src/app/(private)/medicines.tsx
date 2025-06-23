@@ -13,7 +13,6 @@ import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import { FAB, Text } from "react-native-paper";
 import { MedicineListItem } from "../../components/MedicineListItem";
 import { useAuth } from "../../contexts/AuthContext";
-import { getFrequencyText } from "../../utils/medication";
 
 const FREQUENCIES = [
   "A cada 6 horas",
@@ -42,9 +41,14 @@ export default function MedicinesScreen() {
 
           return {
             id: doc.id,
-            name: d.nome,
-            frequency: FREQUENCIES[d.tipo_frequencia] ?? "Desconhecida",
-            dosage: `${d.dose}${d.unidade}`,
+            name: d.name ?? d.nome ?? "",
+            dosage:
+              d.dosage ?? (d.dose && d.unidade ? `${d.dose} ${d.unidade}` : ""),
+            frequency:
+              d.frequency ??
+              (typeof d.tipo_frequencia === "number"
+                ? FREQUENCIES[d.tipo_frequencia]
+                : ""),
             inativo: d.inativo ?? false,
             userId: d.userId,
           };
@@ -177,7 +181,7 @@ export default function MedicinesScreen() {
           <MedicineListItem
             key={item.id}
             name={item.name}
-            frequency={getFrequencyText(item.tipo_frequencia)}
+            frequency={item.frequency}
             dosage={item.dosage}
             onEdit={() => handleEdit(item.id)}
             onDelete={() => handleSoftDelete(item.id)}
