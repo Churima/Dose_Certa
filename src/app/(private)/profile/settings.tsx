@@ -1,11 +1,116 @@
+import { db } from '@/src/config/firebase';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { rescheduleAllUserNotifications } from '@/src/notification/notification';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Button, Divider, IconButton, Switch, Text } from 'react-native-paper';
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
+import React, { useEffect } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+import { Button, Divider, IconButton, Switch, Text, TextInput } from 'react-native-paper';
+
+interface NotificationSettings {
+  isRemindersEnabled: boolean;
+  advanceTimeMinutes: number;
+}
 
 const SettingsScreen = () => {
   const router = useRouter();
+  const { user } = useAuth();
   const [isRemindersEnabled, setIsRemindersEnabled] = React.useState(false);
+  const [advanceTimeMinutes, setAdvanceTimeMinutes] = React.useState('15');
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [isSaving, setIsSaving] = React.useState(false);
+
+  // Carregar configurações do usuário
+  useEffect(() => {
+    const loadSettings = async () => {
+      if (!user) return;
+
+      try {
+        const userDoc = doc(db, 'users', user.uid);
+        const userSnapshot = await getDoc(userDoc);
+        
+        if (userSnapshot.exists()) {
+          const data = userSnapshot.data();
+          const settings = data.notificationSettings as NotificationSettings;
+          
+          if (settings) {
+            setIsRemindersEnabled(settings.isRemindersEnabled || false);
+            setAdvanceTimeMinutes(settings.advanceTimeMinutes?.toString() || '15');
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar configurações:', error);
+      }
+    };
+
+    loadSettings();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (!user) {
+      Alert.alert('Erro', 'Usuário não autenticado');
+      return;
+    }
+
+    const advanceTime = parseInt(advanceTimeMinutes);
+    if (isNaN(advanceTime) || advanceTime < 0 || advanceTime > 120) {
+      Alert.alert('Erro', 'O tempo de antecedência deve estar entre 0 e 120 minutos');
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const settings: NotificationSettings = {
+        isRemindersEnabled,
+        advanceTimeMinutes: advanceTime,
+      };
+
+      const userDoc = doc(db, 'users', user.uid);
+      await setDoc(userDoc, { 
+        notificationSettings: settings,
+        updatedAt: new Date()
+      }, { merge: true });
+
+      // Reagendar notificações com as novas configurações
+      try {
+        // Buscar todos os medicamentos do usuário
+        const medicinesQuery = query(
+          collection(db, 'medicamentos'),
+          where('userId', '==', user.uid)
+        );
+        const medicinesSnapshot = await getDocs(medicinesQuery);
+        const medicines = medicinesSnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        // Reagendar notificações
+        await rescheduleAllUserNotifications(user.uid, medicines);
+      } catch (notificationError) {
+        console.error('Erro ao reagendar notificações:', notificationError);
+        // Não falhar o salvamento se houver erro nas notificações
+      }
+
+      Alert.alert(
+        'Sucesso', 
+        'Configurações salvas com sucesso!',
+        [{ text: 'OK', onPress: () => router.push('/profile') }]
+      );
+
+    } catch (error) {
+      console.error('Erro ao salvar configurações:', error);
+      Alert.alert('Erro', 'Não foi possível salvar as configurações');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleAdvanceTimeChange = (text: string) => {
+    // Permitir apenas números
+    const cleaned = text.replace(/[^\d]/g, '');
+    setAdvanceTimeMinutes(cleaned);
+  };
 
   return (
     <View style={styles.container}>
@@ -39,9 +144,26 @@ const SettingsScreen = () => {
         <View style={styles.optionItem}>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Tempo de Antecedência</Text>
+            <Text style={styles.optionDescription}>
+              Minutos antes do horário para receber o lembrete
+            </Text>
           </View>
-          <Text style={styles.optionValue}>15 minutos</Text>
+          <TextInput
+            value={advanceTimeMinutes}
+            onChangeText={handleAdvanceTimeChange}
+            keyboardType="numeric"
+            style={styles.timeInput}
+            mode="outlined"
+            dense
+            disabled={!isRemindersEnabled}
+          />
         </View>
+        <Text style={styles.helpText}>
+          {isRemindersEnabled 
+            ? `Você receberá lembretes ${advanceTimeMinutes} minutos antes de cada horário`
+            : 'Ative os lembretes para configurar o tempo de antecedência'
+          }
+        </Text>
         <Divider />
       </View>
 
@@ -49,11 +171,13 @@ const SettingsScreen = () => {
       <Button
         mode="contained"
         icon="content-save"
-        onPress={() => console.log('Salvar configurações')}
+        onPress={handleSave}
         style={styles.saveButton}
         labelStyle={styles.saveButtonText}
+        loading={isSaving}
+        disabled={isSaving}
       >
-        Salvar
+        Salvar Configurações
       </Button>
     </View>
   );
@@ -101,10 +225,22 @@ const styles = StyleSheet.create({
   optionDescription: {
     fontSize: 12,
     color: '#666',
+    marginTop: 2,
   },
   optionValue: {
     fontSize: 16,
     color: '#666',
+  },
+  timeInput: {
+    width: 80,
+    textAlign: 'center',
+  },
+  helpText: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    marginTop: 8,
+    marginBottom: 8,
   },
   saveButton: {
     marginHorizontal: 16,
