@@ -1,51 +1,56 @@
-import { useAuth } from '@/src/contexts/AuthContext';
-import { useRouter } from 'expo-router';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
-import React from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
-import { Button, IconButton, Text, TextInput } from 'react-native-paper';
+import { useAuth } from "@/src/contexts/AuthContext";
+import { useRouter } from "expo-router";
+import {
+  EmailAuthProvider,
+  reauthenticateWithCredential,
+  updatePassword,
+} from "firebase/auth";
+import React from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import { Button, TextInput } from "react-native-paper";
+import { ScreenHeader } from "../../../components/ScreenHeader";
 
 const MyDataScreen: React.FC = () => {
   const router = useRouter();
   const { user } = useAuth();
-  const [currentPassword, setCurrentPassword] = React.useState('');
-  const [newPassword, setNewPassword] = React.useState('');
-  const [confirmPassword, setConfirmPassword] = React.useState('');
+  const [currentPassword, setCurrentPassword] = React.useState("");
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
   const [isLoading, setIsLoading] = React.useState(false);
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+      Alert.alert("Erro", "Usuário não autenticado");
       return;
     }
 
     // Verificar se a senha atual foi fornecida
     if (!currentPassword) {
-      Alert.alert('Erro', 'Por favor, insira sua senha atual');
+      Alert.alert("Erro", "Por favor, insira sua senha atual");
       return;
     }
 
     // Verificar se a nova senha foi fornecida
     if (!newPassword) {
-      Alert.alert('Erro', 'Por favor, insira a nova senha');
+      Alert.alert("Erro", "Por favor, insira a nova senha");
       return;
     }
 
     // Verificar se as senhas coincidem
     if (newPassword !== confirmPassword) {
-      Alert.alert('Erro', 'As senhas não coincidem');
+      Alert.alert("Erro", "As senhas não coincidem");
       return;
     }
 
     // Verificar se a nova senha tem pelo menos 6 caracteres
     if (newPassword.length < 6) {
-      Alert.alert('Erro', 'A nova senha deve ter pelo menos 6 caracteres');
+      Alert.alert("Erro", "A nova senha deve ter pelo menos 6 caracteres");
       return;
     }
 
     // Verificar se a nova senha é diferente da atual
     if (currentPassword === newPassword) {
-      Alert.alert('Erro', 'A nova senha deve ser diferente da senha atual');
+      Alert.alert("Erro", "A nova senha deve ser diferente da senha atual");
       return;
     }
 
@@ -53,37 +58,38 @@ const MyDataScreen: React.FC = () => {
 
     try {
       // Reautenticar o usuário com a senha atual
-      const credential = EmailAuthProvider.credential(user.email!, currentPassword);
+      const credential = EmailAuthProvider.credential(
+        user.email!,
+        currentPassword
+      );
       await reauthenticateWithCredential(user, credential);
 
       // Atualizar a senha
       await updatePassword(user, newPassword);
 
       // Limpar campos
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
 
-      Alert.alert(
-        'Sucesso', 
-        'Senha atualizada com sucesso!',
-        [{ text: 'OK', onPress: () => router.push('/profile') }]
-      );
-
+      Alert.alert("Sucesso", "Senha atualizada com sucesso!", [
+        { text: "OK", onPress: () => router.push("/profile") },
+      ]);
     } catch (error: any) {
-      console.error('Erro ao atualizar senha:', error);
-      
-      let errorMessage = 'Erro ao atualizar senha';
-      
-      if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Senha atual incorreta';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'A nova senha é muito fraca';
-      } else if (error.code === 'auth/requires-recent-login') {
-        errorMessage = 'Por segurança, faça login novamente para alterar a senha';
+      console.error("Erro ao atualizar senha:", error);
+
+      let errorMessage = "Erro ao atualizar senha";
+
+      if (error.code === "auth/wrong-password") {
+        errorMessage = "Senha atual incorreta";
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "A nova senha é muito fraca";
+      } else if (error.code === "auth/requires-recent-login") {
+        errorMessage =
+          "Por segurança, faça login novamente para alterar a senha";
       }
-      
-      Alert.alert('Erro', errorMessage);
+
+      Alert.alert("Erro", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -92,10 +98,10 @@ const MyDataScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {/* Cabeçalho */}
-      <View style={styles.header}>
-        <IconButton icon="arrow-left" size={24} onPress={() => router.push('/profile')} />
-        <Text variant="headlineSmall" style={styles.headerTitle}>Alterar Senha</Text>
-      </View>
+      <ScreenHeader
+        title="Alterar Senha"
+        onBack={() => router.push("/profile")}
+      />
 
       {/* Formulário */}
       <View style={styles.formContainer}>
@@ -107,7 +113,7 @@ const MyDataScreen: React.FC = () => {
           mode="outlined"
           style={styles.input}
         />
-        
+
         <TextInput
           label="Nova Senha"
           value={newPassword}
@@ -116,7 +122,7 @@ const MyDataScreen: React.FC = () => {
           mode="outlined"
           style={styles.input}
         />
-        
+
         <TextInput
           label="Confirmar Nova Senha"
           value={confirmPassword}
@@ -126,7 +132,7 @@ const MyDataScreen: React.FC = () => {
           style={styles.input}
         />
       </View>
-      
+
       {/* Botão de salvar */}
       <Button
         mode="contained"
@@ -146,20 +152,7 @@ const MyDataScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  headerTitle: {
-    fontWeight: 'bold',
-    marginLeft: 8,
+    backgroundColor: "#fff",
   },
   formContainer: {
     padding: 16,
@@ -180,7 +173,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
 });
 

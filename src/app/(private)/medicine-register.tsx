@@ -33,6 +33,8 @@ import {
   scheduleMedicineNotifications,
 } from "../../notification/notification";
 
+import { TimeList } from "../../components/TimeList";
+
 const FREQUENCIES = [
   "A cada 8 horas",
   "A cada 6 horas",
@@ -215,7 +217,6 @@ export default function MedicineRegisterScreen() {
         userId: user.uid,
       };
 
-
       if (medicineId) {
         const ref = doc(db, "medicamentos", String(medicineId));
         await updateDoc(ref, medicineData);
@@ -335,18 +336,7 @@ export default function MedicineRegisterScreen() {
           />
         </View>
         {times.length > 0 && (
-          <View style={styles.timesList}>
-            {times.map((t, idx) => (
-              <View key={idx} style={styles.timeItem}>
-                <Text>{t}</Text>
-                <IconButton
-                  icon="close"
-                  size={16}
-                  onPress={() => handleRemoveTime(idx)}
-                />
-              </View>
-            ))}
-          </View>
+          <TimeList times={times} onRemove={handleRemoveTime} />
         )}
         <Portal>
           <Dialog

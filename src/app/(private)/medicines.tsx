@@ -1,11 +1,19 @@
 import { db } from "@/src/config/firebase";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { collection, doc, getDoc, getDocs, updateDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  updateDoc,
+} from "firebase/firestore";
 import { useCallback, useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
-import { FAB, IconButton, Text } from "react-native-paper";
+import { FAB, Text } from "react-native-paper";
+import { MedicineListItem } from "../../components/MedicineListItem";
 import { useAuth } from "../../contexts/AuthContext";
+import { getFrequencyText } from "../../utils/medication";
 
 const FREQUENCIES = [
   "A cada 6 horas",
@@ -38,22 +46,23 @@ export default function MedicinesScreen() {
             frequency: FREQUENCIES[d.tipo_frequencia] ?? "Desconhecida",
             dosage: `${d.dose}${d.unidade}`,
             inativo: d.inativo ?? false,
-            userId: d.userId, 
+            userId: d.userId,
           };
         })
         .filter((med) => {
-
           const isActive = !med.inativo;
           const belongsToUser = med.userId === user.uid;
-          const isOldMedicine = !med.userId; 
-          
+          const isOldMedicine = !med.userId;
+
           return isActive && (belongsToUser || isOldMedicine);
         });
 
       data.forEach((med, index) => {
-        console.log(`${index + 1}. ${med.name} (${med.userId || 'sem userId'})`);
+        console.log(
+          `${index + 1}. ${med.name} (${med.userId || "sem userId"})`
+        );
       });
-      
+
       setMedicines(data);
     } catch (error) {
       console.error("Erro ao buscar medicamentos:", error);
@@ -84,7 +93,7 @@ export default function MedicinesScreen() {
       const ref = doc(db, "medicamentos", id);
       const snapshot = await getDoc(ref);
       const data = snapshot.data();
-      
+
       if (!data) {
         Alert.alert("Erro", "Medicamento não encontrado.");
         return;
@@ -93,7 +102,10 @@ export default function MedicinesScreen() {
       if (!data.userId) {
         await updateDoc(ref, { userId: user.uid });
       } else if (data.userId !== user.uid) {
-        Alert.alert("Erro", "Você não tem permissão para editar este medicamento.");
+        Alert.alert(
+          "Erro",
+          "Você não tem permissão para editar este medicamento."
+        );
         return;
       }
 
@@ -127,14 +139,17 @@ export default function MedicinesScreen() {
               const ref = doc(db, "medicamentos", id);
               const snapshot = await getDoc(ref);
               const data = snapshot.data();
-              
+
               if (!data) {
                 Alert.alert("Erro", "Medicamento não encontrado.");
                 return;
               }
 
               if (data.userId && data.userId !== user.uid) {
-                Alert.alert("Erro", "Você não tem permissão para excluir este medicamento.");
+                Alert.alert(
+                  "Erro",
+                  "Você não tem permissão para excluir este medicamento."
+                );
                 return;
               }
 
@@ -159,23 +174,14 @@ export default function MedicinesScreen() {
       </View>
       <ScrollView style={{ flex: 1, paddingHorizontal: 20 }}>
         {medicines.map((item) => (
-          <View key={item.id} style={styles.medicineItem}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.medicineName}>{item.name}</Text>
-              <Text style={styles.medicineFrequency}>{item.frequency}</Text>
-              <Text style={styles.medicineDosage}>{item.dosage}</Text>
-            </View>
-            <IconButton
-              icon="pencil-outline"
-              size={20}
-              onPress={() => handleEdit(item.id)}
-            />
-            <IconButton
-              icon="trash-can-outline"
-              size={20}
-              onPress={() => handleSoftDelete(item.id)}
-            />
-          </View>
+          <MedicineListItem
+            key={item.id}
+            name={item.name}
+            frequency={getFrequencyText(item.tipo_frequencia)}
+            dosage={item.dosage}
+            onEdit={() => handleEdit(item.id)}
+            onDelete={() => handleSoftDelete(item.id)}
+          />
         ))}
       </ScrollView>
       <FAB style={styles.fab} icon="plus" onPress={handleAdd} />

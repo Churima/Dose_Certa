@@ -1,10 +1,10 @@
 import { useAuth } from "@/src/contexts/AuthContext";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import React from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { ProfileOptionItem } from "../../../components/ProfileOptionItem";
 
 const ProfileScreen = () => {
   const router = useRouter();
@@ -16,33 +16,18 @@ const ProfileScreen = () => {
       </View>
 
       <View style={styles.optionsContainer}>
-        <TouchableOpacity
-          style={styles.optionItem}
-          onPress={() => {
-            router.push("/profile/my-data");
-          }}
-        >
-          <Ionicons name="person-outline" size={24} color="black" />
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionTitle}>Meus Dados</Text>
-            <Text style={styles.optionDescription}>
-              Editar informações básicas
-            </Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.optionItem}
+        <ProfileOptionItem
+          icon="person-outline"
+          title="Meus Dados"
+          description="Editar informações básicas"
+          onPress={() => router.push("/profile/my-data")}
+        />
+        <ProfileOptionItem
+          icon="settings-outline"
+          title="Configurações"
+          description="Notificações e acessibilidade"
           onPress={() => router.push("/profile/settings")}
-        >
-          <Ionicons name="settings-outline" size={24} color="black" />
-          <View style={styles.optionTextContainer}>
-            <Text style={styles.optionTitle}>Configurações</Text>
-            <Text style={styles.optionDescription}>
-              Notificações e acessibilidade
-            </Text>
-          </View>
-        </TouchableOpacity>
+        />
       </View>
 
       <Button mode="contained" onPress={logout} style={styles.logoutButton}>
@@ -72,24 +57,6 @@ const styles = StyleSheet.create({
   optionsContainer: {
     marginTop: 20,
     paddingHorizontal: 16,
-  },
-  optionItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  optionTextContainer: {
-    marginLeft: 15,
-  },
-  optionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  optionDescription: {
-    fontSize: 12,
-    color: "#666",
   },
   logoutButton: {
     marginTop: 30,

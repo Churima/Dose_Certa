@@ -1,11 +1,20 @@
-import { db } from '@/src/config/firebase';
-import { useAuth } from '@/src/contexts/AuthContext';
-import { rescheduleAllUserNotifications } from '@/src/notification/notification';
-import { useRouter } from 'expo-router';
-import { collection, doc, getDoc, getDocs, query, setDoc, where } from 'firebase/firestore';
-import React, { useEffect } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
-import { Button, Divider, IconButton, Switch, Text, TextInput } from 'react-native-paper';
+import { db } from "@/src/config/firebase";
+import { useAuth } from "@/src/contexts/AuthContext";
+import { rescheduleAllUserNotifications } from "@/src/notification/notification";
+import { useRouter } from "expo-router";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  setDoc,
+  where,
+} from "firebase/firestore";
+import React, { useEffect } from "react";
+import { Alert, StyleSheet, View } from "react-native";
+import { Button, Divider, Switch, Text, TextInput } from "react-native-paper";
+import { ScreenHeader } from "../../../components/ScreenHeader";
 
 interface NotificationSettings {
   isRemindersEnabled: boolean;
@@ -16,7 +25,7 @@ const SettingsScreen = () => {
   const router = useRouter();
   const { user } = useAuth();
   const [isRemindersEnabled, setIsRemindersEnabled] = React.useState(false);
-  const [advanceTimeMinutes, setAdvanceTimeMinutes] = React.useState('15');
+  const [advanceTimeMinutes, setAdvanceTimeMinutes] = React.useState("15");
   const [isLoading, setIsLoading] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
 
@@ -26,20 +35,22 @@ const SettingsScreen = () => {
       if (!user) return;
 
       try {
-        const userDoc = doc(db, 'users', user.uid);
+        const userDoc = doc(db, "users", user.uid);
         const userSnapshot = await getDoc(userDoc);
-        
+
         if (userSnapshot.exists()) {
           const data = userSnapshot.data();
           const settings = data.notificationSettings as NotificationSettings;
-          
+
           if (settings) {
             setIsRemindersEnabled(settings.isRemindersEnabled || false);
-            setAdvanceTimeMinutes(settings.advanceTimeMinutes?.toString() || '15');
+            setAdvanceTimeMinutes(
+              settings.advanceTimeMinutes?.toString() || "15"
+            );
           }
         }
       } catch (error) {
-        console.error('Erro ao carregar configurações:', error);
+        console.error("Erro ao carregar configurações:", error);
       }
     };
 
@@ -48,13 +59,16 @@ const SettingsScreen = () => {
 
   const handleSave = async () => {
     if (!user) {
-      Alert.alert('Erro', 'Usuário não autenticado');
+      Alert.alert("Erro", "Usuário não autenticado");
       return;
     }
 
     const advanceTime = parseInt(advanceTimeMinutes);
     if (isNaN(advanceTime) || advanceTime < 0 || advanceTime > 120) {
-      Alert.alert('Erro', 'O tempo de antecedência deve estar entre 0 e 120 minutos');
+      Alert.alert(
+        "Erro",
+        "O tempo de antecedência deve estar entre 0 e 120 minutos"
+      );
       return;
     }
 
@@ -66,41 +80,42 @@ const SettingsScreen = () => {
         advanceTimeMinutes: advanceTime,
       };
 
-      const userDoc = doc(db, 'users', user.uid);
-      await setDoc(userDoc, { 
-        notificationSettings: settings,
-        updatedAt: new Date()
-      }, { merge: true });
+      const userDoc = doc(db, "users", user.uid);
+      await setDoc(
+        userDoc,
+        {
+          notificationSettings: settings,
+          updatedAt: new Date(),
+        },
+        { merge: true }
+      );
 
       // Reagendar notificações com as novas configurações
       try {
         // Buscar todos os medicamentos do usuário
         const medicinesQuery = query(
-          collection(db, 'medicamentos'),
-          where('userId', '==', user.uid)
+          collection(db, "medicamentos"),
+          where("userId", "==", user.uid)
         );
         const medicinesSnapshot = await getDocs(medicinesQuery);
-        const medicines = medicinesSnapshot.docs.map(doc => ({
+        const medicines = medicinesSnapshot.docs.map((doc) => ({
           id: doc.id,
-          ...doc.data()
+          ...doc.data(),
         }));
 
         // Reagendar notificações
         await rescheduleAllUserNotifications(user.uid, medicines);
       } catch (notificationError) {
-        console.error('Erro ao reagendar notificações:', notificationError);
+        console.error("Erro ao reagendar notificações:", notificationError);
         // Não falhar o salvamento se houver erro nas notificações
       }
 
-      Alert.alert(
-        'Sucesso', 
-        'Configurações salvas com sucesso!',
-        [{ text: 'OK', onPress: () => router.push('/profile') }]
-      );
-
+      Alert.alert("Sucesso", "Configurações salvas com sucesso!", [
+        { text: "OK", onPress: () => router.push("/profile") },
+      ]);
     } catch (error) {
-      console.error('Erro ao salvar configurações:', error);
-      Alert.alert('Erro', 'Não foi possível salvar as configurações');
+      console.error("Erro ao salvar configurações:", error);
+      Alert.alert("Erro", "Não foi possível salvar as configurações");
     } finally {
       setIsSaving(false);
     }
@@ -108,21 +123,22 @@ const SettingsScreen = () => {
 
   const handleAdvanceTimeChange = (text: string) => {
     // Permitir apenas números
-    const cleaned = text.replace(/[^\d]/g, '');
+    const cleaned = text.replace(/[^\d]/g, "");
     setAdvanceTimeMinutes(cleaned);
   };
 
   return (
     <View style={styles.container}>
-      {/* Cabeçalho */}
-      <View style={styles.header}>
-        <IconButton icon="arrow-left" size={24} onPress={() => router.push('/profile')} />
-        <Text variant="headlineSmall" style={styles.headerTitle}>Notificações</Text>
-      </View>
+      <ScreenHeader
+        title="Notificações"
+        onBack={() => router.push("/profile")}
+      />
 
       {/* Lembretes de Medicamentos */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Lembretes de Medicamentos</Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Lembretes de Medicamentos
+        </Text>
         <View style={styles.optionItem}>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Ativar Lembretes</Text>
@@ -140,7 +156,9 @@ const SettingsScreen = () => {
 
       {/* Configurações de Lembretes */}
       <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Configurações de Lembretes</Text>
+        <Text variant="titleMedium" style={styles.sectionTitle}>
+          Configurações de Lembretes
+        </Text>
         <View style={styles.optionItem}>
           <View style={styles.optionTextContainer}>
             <Text style={styles.optionTitle}>Tempo de Antecedência</Text>
@@ -159,10 +177,9 @@ const SettingsScreen = () => {
           />
         </View>
         <Text style={styles.helpText}>
-          {isRemindersEnabled 
+          {isRemindersEnabled
             ? `Você receberá lembretes ${advanceTimeMinutes} minutos antes de cada horário`
-            : 'Ative os lembretes para configurar o tempo de antecedência'
-          }
+            : "Ative os lembretes para configurar o tempo de antecedência"}
         </Text>
         <Divider />
       </View>
@@ -186,20 +203,7 @@ const SettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-  },
-  headerTitle: {
-    fontWeight: 'bold',
-    marginLeft: 8,
+    backgroundColor: "#fff",
   },
   section: {
     marginTop: 20,
@@ -209,9 +213,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   optionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingVertical: 12,
   },
   optionTextContainer: {
@@ -220,25 +224,25 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   optionDescription: {
     fontSize: 12,
-    color: '#666',
+    color: "#666",
     marginTop: 2,
   },
   optionValue: {
     fontSize: 16,
-    color: '#666',
+    color: "#666",
   },
   timeInput: {
     width: 80,
-    textAlign: 'center',
+    textAlign: "center",
   },
   helpText: {
     fontSize: 12,
-    color: '#666',
-    fontStyle: 'italic',
+    color: "#666",
+    fontStyle: "italic",
     marginTop: 8,
     marginBottom: 8,
   },
@@ -250,7 +254,7 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: "#fff",
   },
 });
 

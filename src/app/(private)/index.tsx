@@ -15,21 +15,23 @@ import {
 import { useEffect, useState } from "react";
 import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import {
-  ActivityIndicator,
   Appbar,
   Button,
   Card,
   Divider,
-  IconButton,
   List,
   Modal,
   Portal,
   Text,
   TextInput,
 } from "react-native-paper";
+import { LoadingScreen } from "../../components/LoadingScreen";
+import { MedicationCard } from "../../components/MedicationCard";
 import { db } from "../../config/firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { colors } from "../../theme/colors";
+import { formatDate, formatTime } from "../../utils/date";
+import { getFrequencyHours, getFrequencyText } from "../../utils/medication";
 
 interface Medication {
   id: string;
@@ -182,53 +184,6 @@ export default function Home() {
     }
   };
 
-  const formatTime = (date: Date) => {
-    return `${date.getHours().toString().padStart(2, "0")}:${date
-      .getMinutes()
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
-  const formatDate = (date: Date) => {
-    return `${date.getDate().toString().padStart(2, "0")}/${(
-      date.getMonth() + 1
-    )
-      .toString()
-      .padStart(2, "0")}/${date.getFullYear()}`;
-  };
-
-  const getFrequencyHours = (tipoFrequencia: number): number => {
-    switch (tipoFrequencia) {
-      case 0:
-        return 8; // A cada 8 horas
-      case 1:
-        return 6; // A cada 6 horas
-      case 2:
-        return 12; // A cada 12 horas
-      case 3:
-        return 24; // A cada 24 horas
-      default:
-        return 0; // Personalizado
-    }
-  };
-
-  const getFrequencyText = (tipoFrequencia: number): string => {
-    switch (tipoFrequencia) {
-      case 0:
-        return "A cada 8 horas";
-      case 1:
-        return "A cada 6 horas";
-      case 2:
-        return "A cada 12 horas";
-      case 3:
-        return "A cada 24 horas";
-      case 4:
-        return "Personalizado";
-      default:
-        return "Não definido";
-    }
-  };
-
   const handleTaken = (medication: Medication) => {
     console.log("\n=== BOTÃO TOMADO CLICADO ===");
     console.log("Medicamento:", medication.name);
@@ -354,7 +309,7 @@ export default function Home() {
           );
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ ERRO ao confirmar medicamento:", error);
       console.error("Stack:", error.stack);
       console.error("Message:", error.message);
@@ -409,7 +364,7 @@ export default function Home() {
           nextDose
         )} às ${formatTime(nextDose)}`
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao definir horário personalizado:", error);
       Alert.alert("Erro", "Não foi possível definir o horário personalizado");
     }
@@ -461,7 +416,7 @@ export default function Home() {
 
       await loadTodayMedications();
       Alert.alert("Sucesso", "Horário atualizado com sucesso!");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erro ao adiar medicamento:", error);
       Alert.alert("Erro", "Não foi possível adiar o medicamento");
     }
@@ -480,12 +435,7 @@ export default function Home() {
   }
 
   if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Carregando medicamentos...</Text>
-      </View>
-    );
+    return <LoadingScreen message="Carregando medicamentos..." />;
   }
 
   return (
@@ -513,104 +463,15 @@ export default function Home() {
           </Card>
         ) : (
           medications.map((medication) => (
-            <Card
+            <MedicationCard
               key={medication.id}
-              style={[
-                styles.medicationCard,
-                medication.allDosesTaken && styles.completedMedicationCard,
-              ]}
-            >
-              <Card.Content>
-                <View style={styles.medicationHeader}>
-                  <View style={styles.medicationInfo}>
-                    <View
-                      style={[
-                        styles.pillIconContainer,
-                        medication.allDosesTaken &&
-                          styles.completedPillIconContainer,
-                      ]}
-                    >
-                      <IconButton
-                        icon={
-                          medication.allDosesTaken ? "check-circle" : "pill"
-                        }
-                        size={24}
-                        iconColor={colors.primary}
-                        style={{ margin: 0 }}
-                      />
-                    </View>
-                    <View style={styles.medicationDetails}>
-                      <Text
-                        variant="titleMedium"
-                        style={[
-                          styles.medicationName,
-                          medication.allDosesTaken && styles.completedText,
-                        ]}
-                      >
-                        {medication.name}
-                      </Text>
-                      <Text
-                        variant="bodyMedium"
-                        style={[
-                          styles.medicationDosage,
-                          medication.allDosesTaken && styles.completedText,
-                        ]}
-                      >
-                        {medication.dosage}
-                      </Text>
-                      <Text variant="bodySmall" style={styles.frequencyInfo}>
-                        {getFrequencyText(medication.tipoFrequencia)}
-                      </Text>
-                    </View>
-                  </View>
-                  {!medication.allDosesTaken && medication.nextTime && (
-                    <Text variant="titleLarge" style={styles.medicationTime}>
-                      {medication.time}
-                    </Text>
-                  )}
-                  {medication.allDosesTaken && (
-                    <View style={styles.completedBadge}>
-                      <IconButton
-                        icon="check-circle"
-                        size={32}
-                        iconColor={colors.primary}
-                        style={{ margin: 0 }}
-                      />
-                    </View>
-                  )}
-                </View>
-
-                {!medication.allDosesTaken && medication.nextTime && (
-                  <View style={styles.buttonContainer}>
-                    <Button
-                      mode="contained"
-                      onPress={() => handleTaken(medication)}
-                      style={styles.takenButton}
-                      contentStyle={styles.buttonContent}
-                    >
-                      Tomado
-                    </Button>
-                    <Button
-                      mode="outlined"
-                      onPress={() => handlePostpone(medication)}
-                      style={styles.postponeButton}
-                      contentStyle={styles.buttonContent}
-                      textColor={colors.onSurfaceVariant}
-                    >
-                      Adiar
-                    </Button>
-                  </View>
-                )}
-
-                {medication.allDosesTaken && (
-                  <View style={styles.completedContainer}>
-                    <Text variant="bodyMedium" style={styles.completedMessage}>
-                      Todas as doses do dia foram tomadas
-                    </Text>
-                  </View>
-                )}
-              </Card.Content>
-            </Card>
+              name={medication.name}
+              dosage={medication.dosage}
+              time={medication.time}
+              frequency={getFrequencyText(medication.tipoFrequencia)}
+              onTaken={() => handleTaken(medication)}
+              onPostpone={() => handlePostpone(medication)}
+            />
           ))
         )}
       </ScrollView>
@@ -753,88 +614,6 @@ const styles = StyleSheet.create({
   emptyText: {
     color: colors.onSurfaceVariant,
     textAlign: "center",
-  },
-  medicationCard: {
-    marginBottom: 16,
-    backgroundColor: colors.surface,
-    elevation: 1,
-  },
-  completedMedicationCard: {
-    backgroundColor: colors.surfaceVariant,
-    opacity: 0.7,
-  },
-  medicationHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  medicationInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    flex: 1,
-  },
-  pillIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: colors.primaryContainer,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  completedPillIconContainer: {
-    backgroundColor: colors.primaryContainer,
-  },
-  medicationDetails: {
-    flex: 1,
-  },
-  medicationName: {
-    color: colors.onSurface,
-    fontWeight: "600",
-    marginBottom: 2,
-  },
-  medicationDosage: {
-    color: colors.onSurfaceVariant,
-    marginBottom: 2,
-  },
-  frequencyInfo: {
-    color: colors.onSurfaceVariant,
-    fontSize: 12,
-  },
-  completedText: {
-    color: colors.onSurfaceVariant,
-  },
-  medicationTime: {
-    color: colors.onSurface,
-    fontWeight: "600",
-  },
-  completedBadge: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  takenButton: {
-    flex: 1,
-    backgroundColor: colors.primary,
-  },
-  postponeButton: {
-    flex: 1,
-    borderColor: colors.outline,
-  },
-  buttonContent: {
-    height: 40,
-  },
-  completedContainer: {
-    alignItems: "center",
-    padding: 8,
-  },
-  completedMessage: {
-    color: colors.onSurfaceVariant,
-    fontStyle: "italic",
   },
   modalContainer: {
     backgroundColor: colors.surface,

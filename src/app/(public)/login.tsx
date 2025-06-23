@@ -1,30 +1,31 @@
-import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, StyleSheet, View } from 'react-native';
-import { Button, Text, TextInput } from 'react-native-paper';
-import { useAuth } from '../../contexts/AuthContext';
+import { Link, router } from "expo-router";
+import { useState } from "react";
+import { KeyboardAvoidingView, StyleSheet, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { FormError } from "../../components/FormError";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const { signIn } = useAuth();
 
   async function handleLogin() {
     if (!email || !password) {
-      setError('Por favor, preencha todos os campos');
+      setError("Por favor, preencha todos os campos");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
       await signIn(email, password);
-      router.replace('/(private)');
+      router.replace("/(private)");
     } catch {
-      setError('Email ou senha inválidos');
+      setError("Email ou senha inválidos");
     } finally {
       setLoading(false);
     }
@@ -54,9 +55,7 @@ export default function Login() {
           style={styles.input}
         />
 
-        {error ? (
-          <Text style={styles.error}>{error}</Text>
-        ) : null}
+        <FormError message={error} />
 
         <Button
           mode="contained"
@@ -71,10 +70,7 @@ export default function Login() {
         </Button>
 
         <Link href="/register" asChild>
-          <Button
-            mode="text"
-            style={styles.linkButton}
-          >
+          <Button mode="text" style={styles.linkButton}>
             Não tem uma conta? Cadastre-se
           </Button>
         </Link>
@@ -90,10 +86,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
   },
   input: {
@@ -109,8 +105,8 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   error: {
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginBottom: 16,
   },
   linkButton: {

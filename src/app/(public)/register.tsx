@@ -1,36 +1,37 @@
-import { Link, router } from 'expo-router';
-import { useState } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { Button, Text, TextInput } from 'react-native-paper';
-import { useAuth } from '../../contexts/AuthContext';
+import { Link, router } from "expo-router";
+import { useState } from "react";
+import { StyleSheet, View } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
+import { FormError } from "../../components/FormError";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function Register() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
+  const [error, setError] = useState("");
+
   const { signUp } = useAuth();
 
   async function handleRegister() {
     if (!email || !password || !confirmPassword) {
-      setError('Por favor, preencha todos os campos');
+      setError("Por favor, preencha todos os campos");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
+      setError("As senhas não coincidem");
       return;
     }
 
     try {
       setLoading(true);
-      setError('');
+      setError("");
       await signUp(email, password);
-      router.replace('/(private)');
+      router.replace("/(private)");
     } catch {
-      setError('Erro ao criar conta. Tente novamente.');
+      setError("Erro ao criar conta. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -68,9 +69,7 @@ export default function Register() {
           style={styles.input}
         />
 
-        {error ? (
-          <Text style={styles.error}>{error}</Text>
-        ) : null}
+        <FormError message={error} />
 
         <Button
           mode="contained"
@@ -85,10 +84,7 @@ export default function Register() {
         </Button>
 
         <Link href="/login" asChild>
-          <Button
-            mode="text"
-            style={styles.linkButton}
-          >
+          <Button mode="text" style={styles.linkButton}>
             Já tem uma conta? Faça login
           </Button>
         </Link>
@@ -104,10 +100,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   title: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 32,
   },
   input: {
@@ -123,11 +119,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   error: {
-    color: 'red',
-    textAlign: 'center',
+    color: "red",
+    textAlign: "center",
     marginBottom: 16,
   },
   linkButton: {
     marginTop: 16,
   },
-}); 
+});
